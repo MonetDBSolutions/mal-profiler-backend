@@ -83,3 +83,26 @@ create table argument_variable_list (
 );
 
 commit;
+
+start transaction;
+drop table if exists cpuload;
+drop table if exists heartbeat;
+
+create table heartbeat (
+       heartbeat_id bigserial,
+       server_session char(36) not null,
+       clk bigint,
+       ctime bigint,
+       rss int,
+       -- Non voluntary context switch
+       nvcsw int
+);
+
+create table cpuload (
+       cpuload_id bigserial,
+       heartbeat_id bigint,
+       val decimal(3, 2),
+
+       foreign key (heartbeat_id) references heartbeat(heartbeat_id)
+);
+commit;
