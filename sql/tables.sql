@@ -56,6 +56,8 @@ create table mal_variable (
        bid int,
        var_count int,
        var_size int,
+       seqbase int,
+       hghbase int,
        eol bool,
 
        foreign key (mal_execution_id) references mal_execution(execution_id),
@@ -105,4 +107,18 @@ create table cpuload (
 
        foreign key (heartbeat_id) references heartbeat(heartbeat_id)
 );
+commit;
+
+
+start transaction;
+drop table if exists mal_type;
+create table mal_type (
+       type_id serial,
+       aname text,
+       base_size int,
+       subtype_id int,
+
+       foreign key (subtype_id) references mal_type(type_id)
+);
+
 commit;
