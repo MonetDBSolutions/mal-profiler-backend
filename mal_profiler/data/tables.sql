@@ -114,11 +114,13 @@ start transaction;
 drop table if exists mal_type;
 create table mal_type (
        type_id serial,
-       aname text,
+       tname text,
        base_size int,
        subtype_id int,
 
        foreign key (subtype_id) references mal_type(type_id)
 );
+
+insert into mal_type(tname, base_size, subtype_id) values ('int', 4, NULL);
 
 commit;
