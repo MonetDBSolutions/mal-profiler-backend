@@ -85,11 +85,13 @@ class ProfilerObjectParser:
                         # table.
                         self._variable_id += 1
                         is_persistent = True if var.get('kind') == 'persistent' else False
+                        r = mdbl.sql('select type_id from mal_type where name={}'.format(var['type']))
+                        type_id = r['type_id'][0]  # BUG: This might fail badly
                         variable_data = {
                             'name': var.get('name'),
                             'mal_execution_id': self._execution_id,
                             'alias': var.get('alias'),
-                            'type': var.get('type'),
+                            'type_id': type_id,
                             'is_persistent': is_persistent,
                             'bid': var.get('bid'),
                             'var_count': var.get('count'),
