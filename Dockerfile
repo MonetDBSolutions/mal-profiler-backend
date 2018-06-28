@@ -1,5 +1,3 @@
-FROM python:alpine3.6
+FROM python:3.6-jessie
 
-RUN apk update
-RUN apk add ca-certificates
-RUN update-ca-certificates
+RUN pip install pipenv
