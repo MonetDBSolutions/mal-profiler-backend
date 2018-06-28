@@ -20,7 +20,7 @@ create table profiler_event (
        event_id bigserial,
        mal_execution_id bigint not null,
        pc int not null,
-       is_done bool not null,
+       execution_state tinyint not null,
        clk bigint,
        ctime bigint,
        thread int,
@@ -33,7 +33,7 @@ create table profiler_event (
 
        foreign key (mal_execution_id) references mal_execution(execution_id),
        -- constraint unique_event
-       unique(mal_execution_id, pc, is_done)
+       unique(mal_execution_id, pc, execution_state)
 );
 
 create table prerequisite_events (

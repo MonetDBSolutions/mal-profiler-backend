@@ -16,6 +16,7 @@ class ProfilerObjectParser:
         self._heartbeat_id = 0
         self._execution_id = 0
         self._variable_id = 0
+        self._states = {'start': 0, 'done': 1, 'pause': 2}
 
     def parse_object(self, json_string):
         try:
@@ -42,11 +43,11 @@ class ProfilerObjectParser:
             }
             mdbl.insert('mal_execution', execution_data)
 
-            is_done = (True if json_object.get('state') == 'done' else False)
+            exec_state = self._states.get(json_object.get('state'))
             event_data = {
                 'mal_execution_id': self._execution_id,
                 'pc': json_object.get('pc'),
-                'is_done': is_done,
+                'execution_state': exec_state,
                 'clk': json_object.get('clk'),
                 'ctime': json_object.get('ctime'),
                 'thread': json_object.get('thread'),
