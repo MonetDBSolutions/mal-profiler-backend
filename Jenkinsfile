@@ -8,14 +8,16 @@ pipeline {
             steps {
                 // Download monetdblite
                 sh 'wget -O /tmp/monetdblite.tar.gz https://artifactory.zarniwoop.org/downloads/monetdblite-0.2.2.tar.gz'
-                sh 'pip install pipenv'
-                sh 'pipenv install'
-                sh 'pipenv install /tmp/monetdblite.tar.gz'
+                sh 'id'
+                sh 'sudo ls'
+                // sh 'pipenv install'
+                // sh 'pipenv install /tmp/monetdblite.tar.gz'
             }
         }
         stage('Test') {
             steps {
-                sh 'pipenv run py.test --verbose --junit-xml test-reports/results.xml'
+                sh 'echo testing'
+                // sh 'pipenv run py.test --verbose --junit-xml test-reports/results.xml'
             }
         }
         stage('Deploy') {
