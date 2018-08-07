@@ -1,22 +1,16 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 numpy = "*"
 ipython = "*"
 "8cccefa" = {path = "/home/kutsurak/work/monet/sources/mdbl-repos/mdbl-python3/monetdblite-0.2.1.tar.gz"}
 pytest = "*"
-
+"87fc85f" = {editable = true, path = "./../../mdbl-repos/MonetDBLite-Python"}
 
 [dev-packages]
 
-
-
 [requires]
-
 python_version = "3.6"
