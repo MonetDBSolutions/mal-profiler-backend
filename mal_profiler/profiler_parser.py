@@ -11,12 +11,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ProfilerObjectParser:
-    def __init__(self):
+    def __init__(self, db):
         self._event_id = 0
         self._heartbeat_id = 0
         self._execution_id = 0
         self._variable_id = 0
         self._states = {'start': 0, 'done': 1, 'pause': 2}
+        self._db = db
 
     def _parse_trace(self, json_object):
         '''Parses a trace object and adds it in the database
@@ -29,7 +30,7 @@ class ProfilerObjectParser:
             'server_session': json_object.get('session'),
             'tag': json_object.get('tag')
         }
-        mdbl.insert('mal_execution', execution_data)
+        mdbl.insert('mal_execution', execution_data, client=self._db)
 
         exec_state = self._states.get(json_object.get('state'))
         event_data = {
@@ -46,14 +47,17 @@ class ProfilerObjectParser:
             'long_statement': json_object.get('stmt'),
             'short_statement': json_object.get('short')
         }
-        mdbl.insert('profiler_event', event_data)
+        mdbl.insert('profiler_event', event_data, client=self._db)
 
         # Process prerequisite events.
         for prereq in json_object.get('prereq'):
-            mdbl.insert('prerequisite_events', {
-                'prerequisite_event': prereq,
-                'consequent_event': self._event_id
-            })
+            mdbl.insert(
+                'prerequisite_events',
+                {
+                    'prerequisite_event': prereq,
+                    'consequent_event': self._event_id,
+                },
+                client=self._db)
 
         # The algorithm to process a variable list is exactly the
         # same for returns and for arguments, so we should not be
@@ -67,14 +71,20 @@ class ProfilerObjectParser:
             for var in var_list:
                 # FIXME: Use prepared statements
                 # Have we encountered this variable before?
-                r = mdbl.sql('select variable_id from mal_variable where name={}'.format(var['name']))
+                r = mdbl.sql(
+                    'select variable_id from mal_variable where name={}'.format(var['name']),
+                    client=self._db
+                )
                 if len(r['variable_id']) == 0:
                     # Nope, first time we see this
                     # variable. Insert it into the variables
                     # table.
                     self._variable_id += 1
                     is_persistent = True if var.get('kind') == 'persistent' else False
-                    r = mdbl.sql('select type_id from mal_type where name={}'.format(var['type']))
+                    r = mdbl.sql(
+                        'select type_id from mal_type where name={}'.format(var['type']),
+                        client=self._db
+                    )
                     type_id = r['type_id'][0]  # BUG: This might fail badly
                     variable_data = {
                         'name': var.get('name'),
@@ -89,7 +99,7 @@ class ProfilerObjectParser:
                         'hghbase': var.get('hghbase'),
                         'eol': True if var.get('eol') == 0 else False
                     }
-                    mdbl.insert('mal_variable', variable_data)
+                    mdbl.insert('mal_variable', variable_data, client=self._db)
                     current_var_id = self._variable_id
                 else:
                     # Yup, make a note of the variable id.
@@ -101,7 +111,7 @@ class ProfilerObjectParser:
                     'variable_id': current_var_id
                 }
 
-                mdbl.insert(var_list_tables[var_list_field], var_list_data)
+                mdbl.insert(var_list_tables[var_list_field], var_list_data, client=self._db)
 
     def _parse_heartbeat(self, json_object):
         '''Parses a heartbeat object and adds it to the database.
@@ -114,11 +124,13 @@ class ProfilerObjectParser:
                      'rss',
                      'nvcsw')
         data = {(k, json_object.get(k)) for k in data_keys}
-        mdbl.insert('heartbeat', data)
+        mdbl.insert('heartbeat', data, client=self._db)
         for c in json_object['cpuload']:
-            mdbl.insert('cpuload',
-                        {'heartbeat_id': self._heartbeat_id,
-                         'val': c})
+            mdbl.insert(
+                'cpuload',
+                {'heartbeat_id': self._heartbeat_id, 'val': c},
+                client=self._db
+            )
 
     def parse_object(self, json_string):
         try:
