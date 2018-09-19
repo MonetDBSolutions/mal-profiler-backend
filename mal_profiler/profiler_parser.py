@@ -27,6 +27,7 @@ class ProfilerObjectParser:
         self._event_id += 1
         # Extract the mal execution
         execution_data = {
+            'execution_id': self._execution_id,
             'server_session': json_object.get('session'),
             'tag': json_object.get('tag')
         }
@@ -68,36 +69,42 @@ class ProfilerObjectParser:
         }
         for var_list_field in ('ret', 'arg'):
             var_list = json_object.get(var_list_field, list())
+            stmt1 = mdbl.prepare('SELECT variable_id FROM mal_variable WHERE name=?')
+            stmt2 = mdbl.prepare('SELECT type_id FROM mal_type WHERE name=?')
             for var in var_list:
-                # FIXME: Use prepared statements
                 # Have we encountered this variable before?
-                r = mdbl.sql(
-                    'select variable_id from mal_variable where name={}'.format(var['name']),
-                    client=self._db
-                )
+                r = stmt1.execute(var['name'])
+                # r = mdbl.sql(
+                #   'select variable_id from mal_variable where name={}'.format(var['name']),
+                #   client=self._db
+                # )
                 if len(r['variable_id']) == 0:
                     # Nope, first time we see this
                     # variable. Insert it into the variables
                     # table.
                     self._variable_id += 1
-                    is_persistent = True if var.get('kind') == 'persistent' else False
-                    r = mdbl.sql(
-                        'select type_id from mal_type where name={}'.format(var['type']),
-                        client=self._db
-                    )
-                    type_id = r['type_id'][0]  # BUG: This might fail badly
+                    r = stmt2.execute(var['type'])
+                    # r = mdbl.sql(
+                    #     'select type_id from mal_type where name={}'.format(var['type']),
+                    #     client=self._db
+                    # )
+                    if len(r['type_id']) == 0:
+                        LOGGER.warning('Unkown type: {}'.format(var['type']))
+                        LOGGER.warning('Ignoring variable: {}'.format(var['name']))
+                        continue
+                    type_id = r['type_id'][0]
                     variable_data = {
                         'name': var.get('name'),
                         'mal_execution_id': self._execution_id,
                         'alias': var.get('alias'),
                         'type_id': type_id,
-                        'is_persistent': is_persistent,
+                        'is_persistent': var.get('kind') == 'persistent',
                         'bid': var.get('bid'),
                         'var_count': var.get('count'),
                         'var_size': var.get('size'),
                         'seqbase': var.get('seqbase'),
                         'hghbase': var.get('hghbase'),
-                        'eol': True if var.get('eol') == 0 else False
+                        'eol': var.get('eol') == 0
                     }
                     mdbl.insert('mal_variable', variable_data, client=self._db)
                     current_var_id = self._variable_id
