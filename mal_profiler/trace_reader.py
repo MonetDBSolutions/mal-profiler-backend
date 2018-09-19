@@ -32,14 +32,14 @@ def abstract_open(filename):
 
     for tst, fcn in compressions.items():
         if tst(filename):
-            return fcn(filename)
+            return fcn(filename, 'rt', encoding='utf-8')
 
-    return open(filename)
+    return open(filename, 'r')
 
 
 def read_object(fl):
     ln = fl.readline()
-    if ln.endswith('}\n'):
+    if ln.endswith(u'}\n'):
         return ln.strip()
 
     buf = [ln]
