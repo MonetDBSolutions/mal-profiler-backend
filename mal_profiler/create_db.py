@@ -9,6 +9,7 @@ import monetdblite
 def init_backend(dbpath):
     """Start the profiler backend database and create the tables"""
     monetdblite.init(dbpath)
+    connection = monetdblite.connect()
 
     # TODO define an abstract root data directory
     cpath = os.path.dirname(os.path.abspath(__file__))
@@ -18,4 +19,6 @@ def init_backend(dbpath):
 
     # Actually create the tables
     for stmt in sql_in.split(';')[:-1]:
-        monetdblite.sql(stmt)
+        monetdblite.sql(stmt, client=connection)
+
+    return connection
