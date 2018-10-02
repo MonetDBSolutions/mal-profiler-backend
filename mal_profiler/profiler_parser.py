@@ -4,6 +4,7 @@
 
 import json
 import logging
+import exceptions
 
 
 LOGGER = logging.getLogger(__name__)
@@ -30,9 +31,9 @@ class ProfilerObjectParser:
             cursor.execute("INSERT INTO mal_execution(server_session, tag) VALUES (%s, %s)",
                            [json_object['session'], json_object['tag']])
         elif cnt > 1:
-            # TODO: raise exception?
-            LOGGER.warning('more than one executions for session %s and tag %d',
-                           json_object['session'], json_object['tag'])
+            msg = 'more than one executions for session {} and tag {}'.format(json_object['session'], json_object['tag'])
+            LOGGER.error(msg)
+            raise exceptions.IntegrityConstraintViolation(msg)
 
         self._event_id += 1
         print("parsing trace. event id:", self._event_id)
@@ -70,11 +71,13 @@ class ProfilerObjectParser:
             cnt = cursor.execute("SELECT event_id FROM profiler_event WHERE mal_execution_id=%s AND pc=%s AND execution_state=1",
                                  [self._execution_id, prereq])
             if cnt == 0:
-                # TODO: raise exception
-                LOGGER.warning("event with mal_execution_id %d and pc %d not found", self._execution_id, prereq)
+                msg = "event with mal_execution_id {} and pc {} not found".format(self._execution_id, prereq)
+                LOGGER.error(msg)
+                raise exceptions.MissingDataError(msg)
             elif cnt > 1:
-                # TODO: raise exception
-                LOGGER.warning("mal_execution_id %d and pc %d not unique", self._execution_id, prereq)
+                msg = "mal_execution_id {} and pc {} for done state not unique".format(self._execution_id, prereq)
+                LOGGER.error(msg)
+                raise exceptions.IntegrityConstraintViolation(msg)
             prereq_event_id = int(cursor.fetchone()[0])
             ins_prereqs_qtext = """INSERT INTO prerequisite_events(prerequisite_event, consequent_event)
                                    VALUES (%s, %s)"""
@@ -194,7 +197,12 @@ class ProfilerObjectParser:
         try:
             parse_func = dispatcher[source]
         except KeyError:
-            # TODO raise exception
+            # TODO raise exception?
             LOGGER.error("Unkown JSON object kind: %s", source)
             return
-        parse_func(json_object)
+
+        try:
+            parse_func(json_object)
+        except exceptions.MalParserError as e:
+            LOGGER.warning("Parsing JSON Object\n  %s\nfailed:\n  %s", json_object, e.msg)
+            return
