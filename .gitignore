@@ -103,3 +103,8 @@ venv.bak/
 
 
 # End of https://www.gitignore.io/api/python
+/.gdb_history
+/GPATH
+/GRTAGS
+/GTAGS
+/temp_script.py
