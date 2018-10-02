@@ -4,7 +4,7 @@
 
 import json
 import logging
-import exceptions
+import mal_profiler.exceptions
 
 
 LOGGER = logging.getLogger(__name__)
