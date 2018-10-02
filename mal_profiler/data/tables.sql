@@ -133,6 +133,9 @@ insert into mal_type (tname, base_size) values ('oid', 8);
 insert into mal_type (tname, base_size) values ('flt', 8);
 insert into mal_type (tname, base_size) values ('dbl', 16);
 insert into mal_type (tname, base_size) values ('str', -1);
+insert into mal_type (tname, base_size) values ('date', -1);
+insert into mal_type (tname, base_size) values ('void', 0);
+insert into mal_type (tname, base_size) values ('BAT', 0);
 insert into mal_type (tname, base_size, subtype_id) values ('bat[:bit]', 1, 1);
 insert into mal_type (tname, base_size, subtype_id) values ('bat[:bte]', 1, 2);
 insert into mal_type (tname, base_size, subtype_id) values ('bat[:sht]', 2, 3);
@@ -143,5 +146,6 @@ insert into mal_type (tname, base_size, subtype_id) values ('bat[:oid]', 8, 7);
 insert into mal_type (tname, base_size, subtype_id) values ('bat[:flt]', 8, 8);
 insert into mal_type (tname, base_size, subtype_id) values ('bat[:dbl]', 16, 9);
 insert into mal_type (tname, base_size, subtype_id) values ('bat[:str]', -1, 10);
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:date]', -1, 11);
 
 commit;
