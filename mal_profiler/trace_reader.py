@@ -37,23 +37,14 @@ def abstract_open(filename):
     return open(filename, 'r')
 
 
-def read_object(fl):
-    ln = fl.readline()
-    if ln.endswith(u'}\n'):
-        return ln.strip()
-
-    buf = [ln]
-    while True:
-        ln = fl.readline()
-        buf.append(ln)
-        if ln == '}\n':
-            break
-
-    buf.append(ln)
-    return ''.join(buf)
-
-
-def parse_trace(filename, db):
-    pob = ProfilerObjectParser(db)
+def parse_trace(filename, connection):
+    pob = ProfilerObjectParser(connection)
     with abstract_open(filename) as fl:
-        pob.parse_object(read_object(fl))
+        buf = []
+        for ln in fl:
+            buf.append(ln)
+            if ln.endswith(u'}\n'):
+                json_string = ''.join(buf).strip()
+                buf = []
+                # print(json_string)
+                pob.parse_object(json_string)
