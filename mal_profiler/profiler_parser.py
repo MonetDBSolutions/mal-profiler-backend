@@ -112,14 +112,14 @@ class ProfilerObjectParser:
                     variable_data = {
                         "name": var.get('name'),
                         "mal_execution_id": int(self._execution_id),
-                        "alias": var.get('alias', None),
+                        "alias": var.get('alias'),
                         "type_id": int(type_id),
                         "is_persistent": var.get('kind') == 'persistent',
                         "bid": var.get('bid'),
-                        "count": var.get('count', None),
+                        "count": var.get('count'),
                         "size": var.get('size'),
-                        "seqbase": var.get('seqbase', None),
-                        "hghbase": var.get('hghbase', None),
+                        "seqbase": var.get('seqbase'),
+                        "hghbase": var.get('hghbase'),
                         "eol": var.get('eol') == 0
                     }
                     mvar_qtext = """INSERT INTO mal_variable (name, mal_execution_id,
@@ -162,7 +162,7 @@ class ProfilerObjectParser:
                      'ctime',
                      'rss',
                      'nvcsw')
-        data = {(k, json_object.get(k, None)) for k in data_keys}
+        data = {(k, json_object.get(k)) for k in data_keys}
         heartbeat_ins_qtext = """INSERT INTO heartbeat(server_session, clk,
                                                        ctime, rss, nvcsw)
                                  VALUES(%(server_session)s, %(clk)s, %(ctime)s,
