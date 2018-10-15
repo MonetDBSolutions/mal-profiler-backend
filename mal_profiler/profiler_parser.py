@@ -4,7 +4,7 @@
 
 import json
 import logging
-import mal_profiler.exceptions
+import mal_profiler.exceptions as exceptions
 
 
 LOGGER = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class ProfilerObjectParser:
             raise exceptions.IntegrityConstraintViolation(msg)
 
         self._event_id += 1
-        print("parsing trace. event id:", self._event_id)
+        LOGGER.debug("parsing trace. event id:", self._event_id)
 
         exec_state = self._states.get(json_object.get('state'))
         event_data = {
@@ -157,6 +157,7 @@ class ProfilerObjectParser:
         '''
         cursor = self._connection.cursor()
         self._heartbeat_id += 1
+        LOGGER.debug("parsing heartbeat. event id:", self._heartbeat_id)
         data_keys = ('server_session',
                      'clk',
                      'ctime',
