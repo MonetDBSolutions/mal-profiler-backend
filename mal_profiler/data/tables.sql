@@ -13,7 +13,7 @@ create table mal_execution (
        server_session char(36) not null,
        tag int not null,
 
-       unique(server_session, tag)
+       constraint unique_me_mal_execution unique(server_session, tag)
 );
 
 create table profiler_event (
@@ -30,10 +30,12 @@ create table profiler_event (
        type_size int,
        long_statement text,
        short_statement text,
+       instruction text,
+       mal_module text,
 
-       foreign key (mal_execution_id) references mal_execution(execution_id),
+       constraint fk_pe_mal_execution_id foreign key (mal_execution_id) references mal_execution(execution_id),
        -- constraint unique_event
-       unique(mal_execution_id, pc, execution_state)
+       constraint unique_pe_profiler_event unique(mal_execution_id, pc, execution_state)
 );
 
 create table prerequisite_events (
@@ -41,10 +43,8 @@ create table prerequisite_events (
        prerequisite_event bigint,
        consequent_event bigint,
 
-       -- constraint fk_prerequisite_event
-       foreign key (prerequisite_event) references profiler_event(event_id),
-       -- constraint fk_consequent_event
-       foreign key (consequent_event) references profiler_event(event_id)
+       constraint fk_pre_prerequisite_event foreign key (prerequisite_event) references profiler_event(event_id),
+       constraint fk_pre_consequent_event foreign key (consequent_event) references profiler_event(event_id)
 );
 
 create table mal_type (
@@ -53,7 +53,7 @@ create table mal_type (
        base_size int,
        subtype_id int,
 
-       foreign key (subtype_id) references mal_type(type_id)
+       constraint fk_mt_subtype_id foreign key (subtype_id) references mal_type(type_id)
 );
 
 
@@ -70,10 +70,11 @@ create table mal_variable (
        seqbase int,
        hghbase int,
        eol bool,
+       mal_value text,
 
-       foreign key (mal_execution_id) references mal_execution(execution_id),
-       foreign key (type_id) references mal_type(type_id),
-       constraint var_unique_name unique (mal_execution_id, name)
+       constraint fk_mv_mal_execution_id foreign key (mal_execution_id) references mal_execution(execution_id),
+       constraint fk_mv_type_id foreign key (type_id) references mal_type(type_id),
+       constraint unique_mv_var_name unique (mal_execution_id, name)
 );
 
 create table return_variable_list (
@@ -82,8 +83,8 @@ create table return_variable_list (
        event_id bigint,
        variable_id bigint,
 
-       foreign key (event_id) references profiler_event(event_id),
-       foreign key (variable_id) references mal_variable(variable_id)
+       constraint fk_rv_event_id foreign key (event_id) references profiler_event(event_id),
+       constraint fk_rv_variable_id foreign key (variable_id) references mal_variable(variable_id)
 );
 
 create table argument_variable_list (
@@ -92,8 +93,8 @@ create table argument_variable_list (
        event_id bigint,
        variable_id bigint,
 
-       foreign key (event_id) references profiler_event(event_id),
-       foreign key (variable_id) references mal_variable(variable_id)
+       constraint fk_av_event_id foreign key (event_id) references profiler_event(event_id),
+       constraint fk_av_variable_id foreign key (variable_id) references mal_variable(variable_id)
 );
 
 commit;
@@ -117,7 +118,7 @@ create table cpuload (
        heartbeat_id bigint,
        val decimal(3, 2),
 
-       foreign key (heartbeat_id) references heartbeat(heartbeat_id)
+       constraint fk_cl_heartbeat_id foreign key (heartbeat_id) references heartbeat(heartbeat_id)
 );
 commit;
 
