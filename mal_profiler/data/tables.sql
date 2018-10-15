@@ -2,8 +2,8 @@ start transaction;
 
 drop table if exists argument_variable_list;
 drop table if exists return_variable_list;
-drop table if exists mal_type;
 drop table if exists mal_variable;
+drop table if exists mal_type;
 drop table if exists prerequisite_events;
 drop table if exists profiler_event;
 drop table if exists mal_execution;
