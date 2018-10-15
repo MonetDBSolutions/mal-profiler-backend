@@ -12,18 +12,21 @@ def init_backend(dbpath):
 
     # TODO define an abstract root data directory
     cpath = os.path.dirname(os.path.abspath(__file__))
-    tables_file = os.path.join(cpath, os.path.join('data', 'tables.sql'))
-    with open(tables_file) as sql_fl:
-        sql_in = sql_fl.read()
-
-    # Actually create the tables
-    for stmt in sql_in.split(';')[:-1]:
-        connection.execute(stmt)
+    tables_file = os.path.join(cpath, 'data', 'tables.sql')
+    execute_sql_script(connection, tables_file)
 
     return connection
 
 
-def star_backend(dbpath):
+def start_backend(dbpath):
     connection = monetdblite.make_connection(dbpath, autocommit=True)
 
     return connection
+
+
+def execute_sql_script(connection, script_path):
+    with open(script_path) as sql_fl:
+        sql_in = sql_fl.read()
+
+    for stmt in sql_in.split(';')[:-1]:
+        connection.execute(stmt)
