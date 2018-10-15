@@ -51,7 +51,9 @@ class ProfilerObjectParser:
             "rss": json_object.get('rss'),
             "size": json_object.get('size'),
             "long_statement": json_object.get('stmt'),
-            "short_statement": json_object.get('short')
+            "short_statement": json_object.get('short'),
+            "instruction": json_object.get('instruction'),
+            "mal_module": json_object.get('module')
         }
 
         ins_event_qtext = """INSERT INTO profiler_event (mal_execution_id, pc,
@@ -59,11 +61,13 @@ class ProfilerObjectParser:
                                                          ctime, thread,
                                                          mal_function, usec, rss,
                                                          type_size, long_statement,
-                                                         short_statement)
+                                                         short_statement, instruction,
+                                                         mal_module)
                              VALUES(%(execution_id)s, %(pc)s, %(execution_state)s,
                                     %(clk)s, %(ctime)s, %(thread)s, %(mal_function)s,
                                     %(usec)s, %(rss)s, %(size)s, %(long_statement)s,
-                                    %(short_statement)s)"""
+                                    %(short_statement)s, %(instruction)s,
+                                    %(mal_module)s)"""
         cursor.execute(ins_event_qtext, event_data)
 
         # Process prerequisite events.
@@ -120,15 +124,17 @@ class ProfilerObjectParser:
                         "size": var.get('size'),
                         "seqbase": var.get('seqbase'),
                         "hghbase": var.get('hghbase'),
-                        "eol": var.get('eol') == 0
+                        "eol": var.get('eol') == 0,
+                        "mal_value": var.get('value')
                     }
                     mvar_qtext = """INSERT INTO mal_variable (name, mal_execution_id,
                                                               alias, type_id, is_persistent,
                                                               bid, var_count, var_size, seqbase,
-                                                              hghbase, eol)
+                                                              hghbase, eol, mal_value)
                                     VALUES (%(name)s, %(mal_execution_id)s, %(alias)s,
                                             %(type_id)s, %(is_persistent)s, %(bid)s,
-                                            %(count)s, %(size)s, %(seqbase)s, %(hghbase)s, %(eol)s)"""
+                                            %(count)s, %(size)s, %(seqbase)s, %(hghbase)s, %(eol)s,
+                                            %(mal_value)s)"""
                     cursor.execute(mvar_qtext, variable_data)
                     current_var_id = self._variable_id
                 else:
