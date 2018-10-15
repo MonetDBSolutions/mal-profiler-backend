@@ -7,8 +7,8 @@ name = "pypi"
 numpy = "*"
 ipython = "*"
 pytest = "*"
-malpar = {editable = true, path = "."}
-monetdblite = {editable = true, path = "./../../mdbl-repos/MonetDBLite-Python"}
+malpar = {path = ".", editable = true}
+monetdblite = {path = "/home/kutsurak/work/monet/sources/mdbl-repos/MonetDBLite-Python/dist/monetdblite-0.7.0.dev9-cp36-cp36m-linux_x86_64.whl"}
 
 [dev-packages]
 
