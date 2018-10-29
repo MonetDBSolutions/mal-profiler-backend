@@ -1,3 +1,7 @@
+-- This Source Code Form is subject to the terms of the Mozilla Public
+-- License, v. 2.0. If a copy of the MPL was not distributed with this
+-- file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 ALTER TABLE mal_execution
     DROP CONSTRAINT unique_me_mal_execution;
 ALTER TABLE profiler_event
@@ -24,6 +28,5 @@ ALTER TABLE argument_variable_list
     DROP CONSTRAINT fk_av_event_id;
 ALTER TABLE argument_variable_list
     DROP CONSTRAINT fk_av_variable_id;
-
 ALTER TABLE cpuload
     DROP CONSTRAINT fk_cl_heartbeat_id;

@@ -1,3 +1,7 @@
+-- This Source Code Form is subject to the terms of the Mozilla Public
+-- License, v. 2.0. If a copy of the MPL was not distributed with this
+-- file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 ALTER TABLE mal_execution ADD
     CONSTRAINT unique_me_mal_execution UNIQUE(server_session, tag);
 ALTER TABLE profiler_event ADD
@@ -24,6 +28,5 @@ ALTER TABLE argument_variable_list ADD
     constraint fk_av_event_id foreign key (event_id) references profiler_event(event_id);
 ALTER TABLE argument_variable_list ADD
     constraint fk_av_variable_id foreign key (variable_id) references mal_variable(variable_id);
-
 ALTER TABLE cpuload ADD
     constraint fk_cl_heartbeat_id foreign key (heartbeat_id) references heartbeat(heartbeat_id);
