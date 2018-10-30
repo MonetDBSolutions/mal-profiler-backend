@@ -2,22 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import tempfile
-import pytest
+import os
+
 from mal_profiler import create_db
 
 
-@pytest.fixture(scope='function')
-def backend():
-    """Initialize the backend"""
-    db_path = tempfile.mkdtemp(suffix='_mdbl')
-    connection = create_db.init_backend(db_path)
-
-    yield (db_path, connection)
-    connection.close()
-
-
-def test_initialization(backend):
+def test_table_creation(backend):
     '''Make sure that all the tables get created correctly'''
 
     cursor = backend[1].cursor()
@@ -42,5 +32,16 @@ def test_initialization(backend):
 def test_restart(backend):
     backend[1].close()
     connection = create_db.start_backend(backend[0])
-    test_initialization((backend[0], connection))
+    test_table_creation((backend[0], connection))
     connection.close()
+
+
+def test_sql_execution(backend):
+    spath = os.path.dirname(os.path.abspath(__file__))
+    create_db.execute_sql_script(backend[1], os.path.join(spath, 'data', 'test_sql_script.sql'))
+    cursor = backend[1].cursor()
+
+    rslt = cursor.execute("SELECT tag FROM mal_execution")
+    assert rslt == 6
+    rslt = cursor.execute("SELECT tag FROM mal_execution WHERE server_session='a11bd16e-dc2d-11e8-aa5e-e4b318554ad8'")
+    assert rslt == 3
