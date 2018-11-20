@@ -12,6 +12,7 @@ LOGGER = logging.getLogger(__name__)
 
 class ProfilerObjectParser:
     def __init__(self, connection):
+        logging.basicConfig(level=logging.DEBUG)
         self._event_id = 0
         self._heartbeat_id = 0
         self._next_execution_id = 0
@@ -32,6 +33,10 @@ class ProfilerObjectParser:
         current_tag = json_object['tag']
         if cnt == 0:
             self._next_execution_id += 1
+            LOGGER.debug("Creating execution %d for session %s, tag %d",
+                         self._next_execution_id,
+                         json_object['session'],
+                         json_object['tag'])
             self._execution_dict["{}:{}".format(current_session, current_tag)] = self._next_execution_id
             cursor.execute("INSERT INTO mal_execution(server_session, tag) VALUES (%s, %s)",
                            [json_object['session'], json_object['tag']])
@@ -42,11 +47,15 @@ class ProfilerObjectParser:
 
         current_execution_id = self._execution_dict.get("{}:{}".format(json_object['session'], json_object['tag']))
         self._event_id += 1
-        LOGGER.debug("parsing trace. event id:", self._event_id)
+        LOGGER.debug("parsing trace. event id: %d (session %s, tag: %d, pc: %d, state: %s)",
+                     self._event_id,
+                     json_object['session'],
+                     json_object['tag'],
+                     json_object['pc'],
+                     json_object['state'])
 
         exec_state = self._states.get(json_object.get('state'))
         event_data = {
-            "execution_id": self._execution_id,
             "execution_id": current_execution_id,
             "pc": json_object.get('pc'),
             "execution_state": exec_state,
