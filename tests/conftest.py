@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import os
 import shutil
 import tempfile
 
@@ -21,3 +22,22 @@ def backend():
     connection.close()
     shutil.rmtree(db_path)
     print("Deleted directory: {}".format(db_path))
+
+
+@pytest.fixture(scope='module')
+def query_trace():
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    fp = open(os.path.join(cur_dir, 'data', 'example_query_20180621'))
+    return fp.readlines()
+
+
+@pytest.fixture(scope='module')
+def single_event():
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    fp = open(os.path.join(cur_dir, 'data', 'single_event_formatted.json'))
+    return ''.join(fp.readlines())
+
+
+@pytest.fixture(scope='function')
+def create_monetdb_connection():
+    yield None
