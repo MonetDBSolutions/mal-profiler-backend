@@ -14,7 +14,8 @@ class ProfilerObjectParser:
     def __init__(self, connection):
         self._event_id = 0
         self._heartbeat_id = 0
-        self._execution_id = 0
+        self._next_execution_id = 0
+        self._execution_dict = dict()
         self._variable_id = 0
         self._states = {'start': 0, 'done': 1, 'pause': 2}
         self._connection = connection
@@ -26,8 +27,12 @@ class ProfilerObjectParser:
         cursor = self._connection.cursor()
         cnt = cursor.execute("SELECT execution_id FROM mal_execution WHERE server_session=%s AND tag=%s",
                              [json_object['session'], json_object['tag']])
+
+        current_session = json_object['session']
+        current_tag = json_object['tag']
         if cnt == 0:
-            self._execution_id += 1
+            self._next_execution_id += 1
+            self._execution_dict["{}:{}".format(current_session, current_tag)] = self._next_execution_id
             cursor.execute("INSERT INTO mal_execution(server_session, tag) VALUES (%s, %s)",
                            [json_object['session'], json_object['tag']])
         elif cnt > 1:
@@ -35,12 +40,14 @@ class ProfilerObjectParser:
             LOGGER.error(msg)
             raise exceptions.IntegrityConstraintViolation(msg)
 
+        current_execution_id = self._execution_dict.get("{}:{}".format(json_object['session'], json_object['tag']))
         self._event_id += 1
         LOGGER.debug("parsing trace. event id:", self._event_id)
 
         exec_state = self._states.get(json_object.get('state'))
         event_data = {
             "execution_id": self._execution_id,
+            "execution_id": current_execution_id,
             "pc": json_object.get('pc'),
             "execution_state": exec_state,
             "clk": json_object.get('clk'),
@@ -73,13 +80,13 @@ class ProfilerObjectParser:
         # Process prerequisite events.
         for prereq in json_object.get('prereq'):
             cnt = cursor.execute("SELECT event_id FROM profiler_event WHERE mal_execution_id=%s AND pc=%s AND execution_state=1",
-                                 [self._execution_id, prereq])
+                                 [current_execution_id, prereq])
             if cnt == 0:
-                msg = "event with mal_execution_id {} and pc {} not found".format(self._execution_id, prereq)
+                msg = "event with mal_execution_id {} and pc {} not found".format(current_execution_id, prereq)
                 LOGGER.error(msg)
                 raise exceptions.MissingDataError(msg)
             elif cnt > 1:
-                msg = "mal_execution_id {} and pc {} for done state not unique".format(self._execution_id, prereq)
+                msg = "mal_execution_id {} and pc {} for done state not unique".format(current_execution_id, prereq)
                 LOGGER.error(msg)
                 raise exceptions.IntegrityConstraintViolation(msg)
             prereq_event_id = int(cursor.fetchone()[0])
@@ -115,7 +122,7 @@ class ProfilerObjectParser:
                     type_id = res[0]
                     variable_data = {
                         "name": var.get('name'),
-                        "mal_execution_id": int(self._execution_id),
+                        "mal_execution_id": int(current_execution_id),
                         "alias": var.get('alias'),
                         "type_id": int(type_id),
                         "is_persistent": var.get('kind') == 'persistent',
