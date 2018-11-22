@@ -6,30 +6,42 @@
 
 import os
 import shutil
-import tempfile
 
 import pytest
+import monetdblite
 
 from mal_profiler import create_db
 
 
 @pytest.fixture(scope='function')
-def backend():
+def backend(request, tmp_path):
     """Initialize the backend"""
-    db_path = tempfile.mkdtemp(suffix='_mdbl')
-    print("Initializind directory: {}".format(db_path))
+    db_path = tmp_path.resolve().as_posix()
+    # print("Initializind directory: {}".format(db_path))
+
+    def finalizer():
+        connection.close()
+        monetdblite.shutdown()
+        if tmp_path.is_dir():
+            shutil.rmtree(db_path)
+
+    request.addfinalizer(finalizer)
     connection = create_db.init_backend(db_path)
 
-    yield (db_path, connection)
-    connection.close()
-    shutil.rmtree(db_path)
-    print("Deleted directory: {}".format(db_path))
+    return (db_path, connection)
 
 
 @pytest.fixture(scope='module')
 def query_trace():
     cur_dir = os.path.dirname(os.path.abspath(__file__))
-    fp = open(os.path.join(cur_dir, 'data', 'example_query_20180621'))
+    fp = open(os.path.join(cur_dir, 'data', 'Q01_variation100.json'))
+    return fp.readlines()
+
+
+@pytest.fixture(scope='module')
+def query_trace2():
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    fp = open(os.path.join(cur_dir, 'data', 'Q02_variation100.json'))
     return fp.readlines()
 
 
