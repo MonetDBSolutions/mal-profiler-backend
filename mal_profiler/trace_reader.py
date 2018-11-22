@@ -10,6 +10,7 @@ import os
 import gzip
 
 from mal_profiler.profiler_parser import ProfilerObjectParser
+from mal_profiler.create_db import execute_sql_script
 
 
 def test_gzip(filename):
@@ -40,6 +41,10 @@ def abstract_open(filename):
 
 
 def parse_trace(filename, connection):
+    cpath = os.path.dirname(os.path.abspath(__file__))
+    drop_constraints_script = os.path.join(cpath, 'data', 'drop_constraints.sql')
+    execute_sql_script(connection, drop_constraints_script)
+
     pob = ProfilerObjectParser(connection)
     with abstract_open(filename) as fl:
         buf = []
@@ -50,3 +55,6 @@ def parse_trace(filename, connection):
                 buf = []
                 # print(json_string)
                 pob.parse_object(json_string)
+
+    add_constraints_script = os.path.join(cpath, 'data', 'add_constraints.sql')
+    execute_sql_script(connection, add_constraints_script)
