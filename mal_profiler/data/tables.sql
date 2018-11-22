@@ -128,29 +128,29 @@ commit;
 
 
 start transaction;
-insert into mal_type (tname, base_size) values ('bit', 1);
-insert into mal_type (tname, base_size) values ('bte', 1);
-insert into mal_type (tname, base_size) values ('sht', 2);
-insert into mal_type (tname, base_size) values ('int', 4);
-insert into mal_type (tname, base_size) values ('lng', 8);
-insert into mal_type (tname, base_size) values ('hge', 16);
-insert into mal_type (tname, base_size) values ('oid', 8);
-insert into mal_type (tname, base_size) values ('flt', 8);
-insert into mal_type (tname, base_size) values ('dbl', 16);
-insert into mal_type (tname, base_size) values ('str', -1);
-insert into mal_type (tname, base_size) values ('date', -1);
-insert into mal_type (tname, base_size) values ('void', 0);
-insert into mal_type (tname, base_size) values ('BAT', 0);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:bit]', 1, 1);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:bte]', 1, 2);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:sht]', 2, 3);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:int]', 4, 4);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:lng]', 8, 5);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:hge]', 16, 6);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:oid]', 8, 7);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:flt]', 8, 8);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:dbl]', 16, 9);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:str]', -1, 10);
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:date]', -1, 11);
+insert into mal_type (tname, base_size) values ('bit', 1);                          -- 1
+insert into mal_type (tname, base_size) values ('bte', 1);                          -- 2
+insert into mal_type (tname, base_size) values ('sht', 2);                          -- 3
+insert into mal_type (tname, base_size) values ('int', 4);                          -- 4
+insert into mal_type (tname, base_size) values ('lng', 8);                          -- 5
+insert into mal_type (tname, base_size) values ('hge', 16);                         -- 6
+insert into mal_type (tname, base_size) values ('oid', 8);                          -- 7
+insert into mal_type (tname, base_size) values ('flt', 8);                          -- 8
+insert into mal_type (tname, base_size) values ('dbl', 16);                         -- 9
+insert into mal_type (tname, base_size) values ('str', -1);                         -- 10
+insert into mal_type (tname, base_size) values ('date', -1);                        -- 11
+insert into mal_type (tname, base_size) values ('void', 0);                         -- 12
+insert into mal_type (tname, base_size) values ('BAT', 0);                          -- 13
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:bit]', 1, 1);     -- 14
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:bte]', 1, 2);     -- 15
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:sht]', 2, 3);     -- 16
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:int]', 4, 4);     -- 17
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:lng]', 8, 5);     -- 18
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:hge]', 16, 6);    -- 19
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:oid]', 8, 7);     -- 20
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:flt]', 8, 8);     -- 21
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:dbl]', 16, 9);    -- 22
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:str]', -1, 10);   -- 23
+insert into mal_type (tname, base_size, subtype_id) values ('bat[:date]', -1, 11);  -- 24
 
 commit;
