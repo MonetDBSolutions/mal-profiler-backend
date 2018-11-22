@@ -22,6 +22,109 @@ class ProfilerObjectParser:
         self._variable_id = 0
         self._states = {'start': 0, 'done': 1, 'pause': 2}
         self._connection = connection
+        # All possible MAL variable types.
+        # NOTE: This might need to be updated if new types are added.
+        self._type_dict = {
+            'bit': 1,
+            'bte': 2,
+            'sht': 3,
+            'int': 4,
+            'lng': 5,
+            'hge': 6,
+            'oid': 7,
+            'flt': 8,
+            'dbl': 9,
+            'str': 10,
+            'date': 11,
+            'void': 12,
+            'BAT': 13,
+            'bat[:bit]': 14,
+            'bat[:bte]': 15,
+            'bat[:sht]': 16,
+            'bat[:int]': 17,
+            'bat[:lng]': 18,
+            'bat[:hge]': 19,
+            'bat[:oid]': 20,
+            'bat[:flt]': 21,
+            'bat[:dbl]': 22,
+            'bat[:str]': 23,
+            'bat[:date]': 24,
+        }
+
+    def _parse_variable(self, var_data):
+        '''Parse a single MAL variable'''
+        variable = {
+            # "mal_execution_id": int(current_execution_id),
+            "type_id": self._type_dict.get(var_data.get("type"), -1),
+            "name": var_data.get('name'),
+            "alias": var_data.get('alias'),
+            "is_persistent": var_data.get('kind') == 'persistent',
+            "bid": var_data.get('bid'),
+            "count": var_data.get('count'),
+            "size": var_data.get('size', 0),
+            "seqbase": var_data.get('seqbase'),
+            "hghbase": var_data.get('hghbase'),
+            "eol": var_data.get('eol') == 1,
+            "mal_value": var_data.get('value')
+        }
+
+        return variable
+
+    def _parse_event(self, json_object):
+        '''Parse a single profiler event
+
+Returns 5 items:
+* A dictionary containing the event data.
+* A list of prerequisite event ids.
+* A list of referenced variables.
+* A list of argument variable ids.
+* A list of return variable ids.
+'''
+
+        event_data = {
+            "session": json_object.get("session"),
+            "tag": json_object.get("tag"),
+            "pc": json_object.get("pc"),
+            "execution_state": self._states.get(json_object.get("state")),
+            "clk": json_object.get("clk"),
+            "ctime": json_object.get("ctime"),
+            "thread": json_object.get("thread"),
+            "mal_function": json_object.get("function"),
+            "usec": json_object.get("usec"),
+            "rss": json_object.get("rss"),
+            "size": json_object.get("size"),
+            "long_statement": json_object.get("stmt"),
+            "short_statement": json_object.get("short"),
+            "instruction": json_object.get("instruction"),
+            "mal_module": json_object.get("module")
+        }
+
+        prereq_list = json_object.get("prereq")
+        referenced_vars = dict()
+        argument_vars = list()
+        return_vars = list()
+
+        for item in json_object.get("arg", []):
+            parsed_var = self._parse_variable(item)
+            var_name = parsed_var.get('name')
+            if var_name is None:
+                raise exceptions.MalParserError('Unnamed variable')
+            if var_name in referenced_vars:
+                raise exceptions.MalParserError('Variable named {} already in referenced_vars'.format(var_name))
+            referenced_vars[var_name] = parsed_var
+            argument_vars.append(parsed_var.get('name'))
+
+        for item in json_object.get("ret", []):
+            parsed_var = self._parse_variable(item)
+            var_name = parsed_var.get('name')
+            if var_name is None:
+                raise exceptions.MalParserError('Unnamed variable')
+            if var_name in referenced_vars:
+                raise exceptions.MalParserError('Variable named {} already in referenced_vars'.format(var_name))
+            referenced_vars[var_name] = parsed_var
+            return_vars.append(parsed_var.get('name'))
+        
+        return (event_data, prereq_list, referenced_vars, argument_vars, return_vars)
 
     def _parse_trace(self, json_object):
         '''Parses a trace object and adds it in the database
@@ -40,6 +143,7 @@ class ProfilerObjectParser:
                          json_object['session'],
                          json_object['tag'])
             self._execution_dict["{}:{}".format(current_session, current_tag)] = self._next_execution_id
+            # keep
             cursor.execute("INSERT INTO mal_execution(server_session, tag) VALUES (%s, %s)",
                            [json_object['session'], json_object['tag']])
         elif cnt > 1:
@@ -57,6 +161,7 @@ class ProfilerObjectParser:
                      json_object['state'])
 
         exec_state = self._states.get(json_object.get('state'))
+        # return
         event_data = {
             "execution_id": current_execution_id,
             "pc": json_object.get('pc'),
@@ -74,6 +179,7 @@ class ProfilerObjectParser:
             "mal_module": json_object.get('module')
         }
 
+        # kick out
         ins_event_qtext = """INSERT INTO profiler_event (mal_execution_id, pc,
                                                          execution_state, clk,
                                                          ctime, thread,
@@ -101,6 +207,7 @@ class ProfilerObjectParser:
                 LOGGER.error(msg)
                 raise exceptions.IntegrityConstraintViolation(msg)
             prereq_event_id = int(cursor.fetchone()[0])
+            # kick out
             ins_prereqs_qtext = """INSERT INTO prerequisite_events(prerequisite_event, consequent_event)
                                    VALUES (%s, %s)"""
             cursor.execute(ins_prereqs_qtext, [prereq_event_id, self._event_id])
@@ -145,6 +252,7 @@ class ProfilerObjectParser:
                         "eol": var.get('eol') == 0,
                         "mal_value": var.get('value')
                     }
+                    # kick out
                     mvar_qtext = """INSERT INTO mal_variable (name, mal_execution_id,
                                                               alias, type_id, is_persistent,
                                                               bid, var_count, var_size, seqbase,
@@ -166,6 +274,7 @@ class ProfilerObjectParser:
                     'variable_id': int(current_var_id)
                 }
 
+                # kick out
                 lt_ins_qtext = """INSERT INTO {}(variable_list_index,
                                                  event_id, variable_id)
                                   VALUES (%(variable_list_index)s, %(event_id)s,

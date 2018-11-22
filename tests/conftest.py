@@ -11,6 +11,7 @@ import pytest
 import monetdblite
 
 from mal_profiler import create_db
+from mal_profiler import profiler_parser
 
 
 @pytest.fixture(scope='function')
@@ -55,3 +56,10 @@ def single_event():
 @pytest.fixture(scope='function')
 def create_monetdb_connection():
     yield None
+
+
+@pytest.fixture(scope='function')
+def parser_object(backend):
+    parser = profiler_parser.ProfilerObjectParser(backend[1])
+
+    return parser
