@@ -10,6 +10,7 @@ pytest = "*"
 malpar = {path = ".", editable = true}
 tox = "*"
 monetdblite = "*"
+coveralls = "*"
 
 [dev-packages]
 

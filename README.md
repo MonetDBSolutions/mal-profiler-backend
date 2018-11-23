@@ -1,4 +1,6 @@
 # Python MAL analytics
+[![Build Status](https://travis-ci.org/MonetDBSolutions/mal-profiler-backend.svg?branch=master)](https://travis-ci.org/MonetDBSolutions/mal-profiler-backend)
+[![Coverage Status](https://coveralls.io/repos/github/MonetDBSolutions/mal-profiler-backend/badge.svg)](https://coveralls.io/github/MonetDBSolutions/mal-profiler-backend)
 
 ## Introduction
 
