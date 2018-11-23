@@ -7,10 +7,11 @@
 import json
 
 import pytest
-
+from mal_profiler import exceptions
 
 class TestParser(object):
     def test_parse_single_variable(self, parser_object):
+        '''Test parsing of a single variable'''
         json_input_str = """{"index":"0","name":"C_1502","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":"0","count":"0","size":0,"eol":0}"""
         json_input = json.loads(json_input_str)
 
@@ -35,6 +36,7 @@ class TestParser(object):
             assert variable.get(k) == v
 
     def test_parse_single_event(self, parser_object):
+        """Test parsing a single event"""
         json_input_str = """{"source":"trace","clk":1073703375,"ctime":1532603484932132,"thread":15,"function":"user.main","pc":46,"tag":214,"session":"dc2c13b3-8bde-4706-8ee5-60703a176325","state":"start","usec":0,"rss":1969,"size":0,"nvcsw":1,"stmt":"C_1502=nil:bat[:oid] := algebra.thetaselect(X_1338=<tmp_3010>[18751184]:bat[:date], C_283=<tmp_2056>[18751184]:bat[:oid], \\\"1998-08-22\\\":date, \\\"<=\\\":str);","short":"C_1502[0]:= thetaselect( X_1338[18751184], C_283[18751184], 1998-08-22, \\\"<=\\\" )","prereq":[44,45],"ret":[{"index":"0","name":"C_1502","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":"0","count":"0","size":0,"eol":0}],"arg":[{"index":"1","name":"X_1338","alias":"sys.lineitem.l_shipdate","type":"bat[:date]","view":"true","parent":"787","seqbase":"18751184","hghbase":"37502368","kind":"persistent","bid":"1544","count":"18751184","size":75004736,"eol":1},{"index":"2","name":"C_283","type":"bat[:oid]","kind":"transient","bid":"1070","count":"18751184","size":0,"eol":1},{"index":"3","name":"X_265","type":"date","value":"1998-08-22","eol":0},{"index":"4","name":"X_72","type":"str","value":"\\\"<=\\\"","eol":0}]}"""
         json_input = json.loads(json_input_str)
 
@@ -154,8 +156,19 @@ class TestParser(object):
         for v in ret_vars_truth:
             assert v in ret_vars
 
-        # assert False
+    def test_parse_unnamed_variable_raises(self, parser_object):
+        json_input_str = """{"source":"trace","clk":1073703375,"ctime":1532603484932132,"thread":15,"function":"user.main","pc":46,"tag":214,"session":"dc2c13b3-8bde-4706-8ee5-60703a176325","state":"start","usec":0,"rss":1969,"size":0,"nvcsw":1,"stmt":"C_1502=nil:bat[:oid] := algebra.thetaselect(X_1338=<tmp_3010>[18751184]:bat[:date], C_283=<tmp_2056>[18751184]:bat[:oid], \\\"1998-08-22\\\":date, \\\"<=\\\":str);","short":"C_1502[0]:= thetaselect( X_1338[18751184], C_283[18751184], 1998-08-22, \\\"<=\\\" )","prereq":[44,45],"ret":[{"index":"0","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":"0","count":"0","size":0,"eol":0}],"arg":[{"index":"1","name":"X_1338","alias":"sys.lineitem.l_shipdate","type":"bat[:date]","view":"true","parent":"787","seqbase":"18751184","hghbase":"37502368","kind":"persistent","bid":"1544","count":"18751184","size":75004736,"eol":1},{"index":"2","name":"C_283","type":"bat[:oid]","kind":"transient","bid":"1070","count":"18751184","size":0,"eol":1},{"index":"3","name":"X_265","type":"date","value":"1998-08-22","eol":0},{"index":"4","name":"X_72","type":"str","value":"\\\"<=\\\"","eol":0}]}"""
+
+        json_input = json.loads(json_input_str)
+        with pytest.raises(exceptions.MalParserError):
+            event_data, prereq_list, variables, arg_vars, ret_vars = parser_object._parse_event(json_input)
+
+
 
     @pytest.mark.skip()
     def test_parse_single_trace(self, query_trace):
+        assert False
+
+    @pytest.mark.skip()
+    def test_parse_multiple_traces(self, query_trace1, query_trace2):
         assert False

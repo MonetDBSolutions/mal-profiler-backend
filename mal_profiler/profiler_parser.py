@@ -101,30 +101,22 @@ Returns 5 items:
 
         prereq_list = json_object.get("prereq")
         referenced_vars = dict()
-        argument_vars = list()
-        return_vars = list()
+        variable_lists = dict()
+        variable_lists["arg"] = list()
+        variable_lists["ret"] = list()
 
-        for item in json_object.get("arg", []):
-            parsed_var = self._parse_variable(item)
-            var_name = parsed_var.get('name')
-            if var_name is None:
-                raise exceptions.MalParserError('Unnamed variable')
-            if var_name in referenced_vars:
-                raise exceptions.MalParserError('Variable named {} already in referenced_vars'.format(var_name))
-            referenced_vars[var_name] = parsed_var
-            argument_vars.append(parsed_var.get('name'))
+        for var_kind in ["arg", "ret"]:
+            for item in json_object.get(var_kind, []):
+                parsed_var = self._parse_variable(item)
+                var_name = parsed_var.get('name')
+                if var_name is None:
+                    raise exceptions.MalParserError('Unnamed variable')
+                if var_name in referenced_vars:
+                    raise exceptions.MalParserError('Variable named {} already in referenced_vars'.format(var_name))
+                referenced_vars[var_name] = parsed_var
+                variable_lists[var_kind].append(parsed_var.get('name'))
 
-        for item in json_object.get("ret", []):
-            parsed_var = self._parse_variable(item)
-            var_name = parsed_var.get('name')
-            if var_name is None:
-                raise exceptions.MalParserError('Unnamed variable')
-            if var_name in referenced_vars:
-                raise exceptions.MalParserError('Variable named {} already in referenced_vars'.format(var_name))
-            referenced_vars[var_name] = parsed_var
-            return_vars.append(parsed_var.get('name'))
-        
-        return (event_data, prereq_list, referenced_vars, argument_vars, return_vars)
+        return (event_data, prereq_list, referenced_vars, variable_lists["arg"], variable_lists["ret"])
 
     def _parse_trace(self, json_object):
         '''Parses a trace object and adds it in the database
