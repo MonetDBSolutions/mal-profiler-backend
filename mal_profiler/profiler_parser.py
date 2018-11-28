@@ -13,6 +13,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ProfilerObjectParser:
+    '''A parser for the MonetDB profiler traces.
+
+    The purpose of this class is to turn the JSON objects that the
+    MonetDB profiler emmits into a representation ready to be inserted
+    into a MonetDBLite-Python trace database.
+    '''
     def __init__(self, connection):
         logging.basicConfig(level=logging.DEBUG)
         self._event_id = 0
@@ -52,7 +58,35 @@ class ProfilerObjectParser:
         }
 
     def _parse_variable(self, var_data):
-        '''Parse a single MAL variable'''
+        '''Parse a single MAL variable.
+
+        :param var_data: A dictionary representing the JSON description of a MAL variable.
+        :returns: a dictionary with the following fields
+
+          ``type_id``
+              The database identifier of the type of the variable (see ...).
+          ``name``
+              The name of the variable.
+          ``alias``
+              (???)
+          ``is_persistent``
+              If the variable is persistent ``True`` or intermediate ``False``.
+          ``bid``
+              BAT ID(???).
+          ``count``
+              If the variable refers to a BAT, how many elements are in the BAT.
+          ``size``
+              The size of the type (???).
+          ``seqbase``
+              (???)
+          ``hghbase``
+              (???)
+          ``eol``
+              If `True` then the variable can be garbage collected.
+          ``mal_value``
+              If the variable is scalar, this is its value.
+
+        '''
         variable = {
             # "mal_execution_id": int(current_execution_id),
             "type_id": self._type_dict.get(var_data.get("type"), -1),
@@ -73,13 +107,15 @@ class ProfilerObjectParser:
     def _parse_event(self, json_object):
         '''Parse a single profiler event
 
-Returns 5 items:
-  * A dictionary containing the event data.
-  * A list of prerequisite event ids.
-  * A list of referenced variables.
-  * A list of argument variable ids.
-  * A list of return variable ids.
-'''
+        :param json_object: A dictionary representing a JSON object emmited by the profiler.
+        :returns: a tuple of 5 items:
+
+            - A dictionary containing the event data
+            - A list of prerequisite event ids
+            - A list of referenced variables
+            - A list of argument variable ids
+            - A list of return variable ids
+        '''
 
         event_data = {
             "session": json_object.get("session"),
@@ -121,13 +157,13 @@ Returns 5 items:
     def _get_execution_id(self, session, tag):
         '''Return the execution id for the given session and tag
 
-Before inserting events in the database execute
+        Before inserting events in the database execute
 
-.. code-block:: sql
+        .. code-block:: sql
 
-   SELECT max(execution_id) FROM mal_execution
+           SELECT max(execution_id) FROM mal_execution
 
-and add the result to all the execution ids.
+        and add the result to all the execution ids.
         '''
         key = "{}:{}".format(session, tag)
         execution_id = self._execution_dict.get(key)
@@ -139,6 +175,11 @@ and add the result to all the execution ids.
         return execution_id
 
     def _parse_trace_stream(self, json_stream):
+        '''Parce a list of json trace objects
+
+        This will create a representation ready to be inserted into the
+        database.
+        '''
         executions = dict()
         for json_event in json_stream:
             event_data, prereq_list, referenced_vars, args, lists = self._parse_event(json_event)
@@ -307,25 +348,26 @@ and add the result to all the execution ids.
         '''Parses a heartbeat object and adds it to the database.
 
         '''
-        cursor = self._connection.cursor()
-        self._heartbeat_id += 1
-        LOGGER.debug("parsing heartbeat. event id:", self._heartbeat_id)
-        data_keys = ('server_session',
-                     'clk',
-                     'ctime',
-                     'rss',
-                     'nvcsw')
-        data = {(k, json_object.get(k)) for k in data_keys}
-        heartbeat_ins_qtext = """INSERT INTO heartbeat(server_session, clk,
-                                                       ctime, rss, nvcsw)
-                                 VALUES(%(server_session)s, %(clk)s, %(ctime)s,
-                                        %(rss)s, %(nvcsw)s)"""
-        cursor.execute(heartbeat_ins_qtext, data)
-        cpl_ins_qtext = """INSERT INTO cpuload(heartbeat_id, val)
-                            VALUES(%(heartbeat_id)s, %(val)s)"""
-        for c in json_object['cpuload']:
-            cursor.execute(cpl_ins_qtext, {'heartbeat_id': self._heartbeat_id,
-                                           'val': c})
+        pass
+        # cursor = self._connection.cursor()
+        # self._heartbeat_id += 1
+        # LOGGER.debug("parsing heartbeat. event id:", self._heartbeat_id)
+        # data_keys = ('server_session',
+        #              'clk',
+        #              'ctime',
+        #              'rss',
+        #              'nvcsw')
+        # data = {(k, json_object.get(k)) for k in data_keys}
+        # heartbeat_ins_qtext = """INSERT INTO heartbeat(server_session, clk,
+        #                                                ctime, rss, nvcsw)
+        #                          VALUES(%(server_session)s, %(clk)s, %(ctime)s,
+        #                                 %(rss)s, %(nvcsw)s)"""
+        # cursor.execute(heartbeat_ins_qtext, data)
+        # cpl_ins_qtext = """INSERT INTO cpuload(heartbeat_id, val)
+        #                     VALUES(%(heartbeat_id)s, %(val)s)"""
+        # for c in json_object['cpuload']:
+        #     cursor.execute(cpl_ins_qtext, {'heartbeat_id': self._heartbeat_id,
+        #                                    'val': c})
 
     def parse_object(self, json_string):
         try:
