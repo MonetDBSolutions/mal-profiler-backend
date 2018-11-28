@@ -4,9 +4,9 @@
 .. image:: https://coveralls.io/repos/github/MonetDBSolutions/mal-profiler-backend/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/MonetDBSolutions/mal-profiler-backend?branch=master
 
-####################
+====================
 Python MAL analytics
-####################
+====================
 
 Introduction
 ============
