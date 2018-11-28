@@ -74,11 +74,11 @@ class ProfilerObjectParser:
         '''Parse a single profiler event
 
 Returns 5 items:
-* A dictionary containing the event data.
-* A list of prerequisite event ids.
-* A list of referenced variables.
-* A list of argument variable ids.
-* A list of return variable ids.
+  * A dictionary containing the event data.
+  * A list of prerequisite event ids.
+  * A list of referenced variables.
+  * A list of argument variable ids.
+  * A list of return variable ids.
 '''
 
         event_data = {
@@ -121,7 +121,12 @@ Returns 5 items:
     def _get_execution_id(self, session, tag):
         '''Return the execution id for the given session and tag
 
-Before inserting events in the database execute ``SELECT max(execution_id) FROM mal_execution``
+Before inserting events in the database execute
+
+.. code-block:: sql
+
+   SELECT max(execution_id) FROM mal_execution
+
 and add the result to all the execution ids.
         '''
         key = "{}:{}".format(session, tag)

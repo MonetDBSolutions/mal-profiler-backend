@@ -7,10 +7,11 @@ name = "pypi"
 numpy = "*"
 ipython = "*"
 pytest = "*"
-malpar = {path = ".", editable = true}
+malpar = {path = ".",editable = true}
 tox = "*"
 monetdblite = "*"
 coveralls = "*"
+sphinx = "*"
 
 [dev-packages]
 
