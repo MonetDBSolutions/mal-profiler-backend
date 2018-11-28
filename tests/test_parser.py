@@ -164,6 +164,19 @@ class TestParser(object):
             event_data, prereq_list, variables, arg_vars, ret_vars = parser_object._parse_event(json_input)
 
 
+    def test_execution_id(self, parser_object):
+        tag1 = 1
+        tag2 = 2
+        session = "dc2c13b3-8bde-4706-8ee5-60703a176325"
+
+        id1 = parser_object._get_execution_id(session, tag1)
+        id2 = parser_object._get_execution_id(session, tag1)
+        id3 = parser_object._get_execution_id(session, tag2)
+
+        assert id1 == id2
+        assert id2 != id3
+        assert id1 >= 1
+        assert id2 >= 1
 
     @pytest.mark.skip()
     def test_parse_single_trace(self, query_trace):

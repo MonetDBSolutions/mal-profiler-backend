@@ -118,6 +118,27 @@ Returns 5 items:
 
         return (event_data, prereq_list, referenced_vars, variable_lists["arg"], variable_lists["ret"])
 
+    def _get_execution_id(self, session, tag):
+        '''Return the execution id for the given session and tag
+
+Before inserting events in the database execute ``SELECT max(execution_id) FROM mal_execution``
+and add the result to all the execution ids.
+        '''
+        key = "{}:{}".format(session, tag)
+        execution_id = self._execution_dict.get(key)
+        if execution_id is None:
+            self._next_execution_id += 1
+            execution_id = self._next_execution_id
+            self._execution_dict[key] = execution_id
+
+        return execution_id
+
+    def _parse_trace_stream(self, json_stream):
+        executions = dict()
+        for json_event in json_stream:
+            event_data, prereq_list, referenced_vars, args, lists = self._parse_event(json_event)
+            execution = self._get_execution_id(event_data.get('session'), event_data.get('tag'))
+
     def _parse_trace(self, json_object):
         pass
         # '''Parses a trace object and adds it in the database
