@@ -375,7 +375,7 @@ class ProfilerObjectParser:
         except json.JSONDecodeError as json_error:
             LOGGER.warning("W001: Cannot parse object")
             LOGGER.warning(json_string)
-            LOGGER.warning("Decoder reports %s", json_string)
+            LOGGER.warning("Decoder reports %s", json_error)
             return
 
         dispatcher = {
