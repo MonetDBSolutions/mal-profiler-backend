@@ -1,6 +1,9 @@
 Internals
 =========
 
+Data Structures
+---------------
+
 The internal representation of the profiler information is expressed
 using a number of Python data structures that map more or less directly
 to the tables in the database. These are:
@@ -74,3 +77,12 @@ to the tables in the database. These are:
       example ``algebra``, ``bat``, etc.
 
 - ``variable``
+
+Error codes
+-----------
+
+============= ====================================
+Error code    Meaning
+------------- ------------------------------------
+W001          Ignoring object that contains errors
+============= ====================================

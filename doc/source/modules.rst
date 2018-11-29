@@ -1,5 +1,5 @@
 mal_analytics
-============
+=============
 
 .. toctree::
    :maxdepth: 4
