@@ -132,7 +132,8 @@ class ProfilerObjectParser:
             "long_statement": json_object.get("stmt"),
             "short_statement": json_object.get("short"),
             "instruction": json_object.get("instruction"),
-            "mal_module": json_object.get("module")
+            "mal_module": json_object.get("module"),
+            "version": json_object.get("version"),
         }
 
         prereq_list = json_object.get("prereq")
