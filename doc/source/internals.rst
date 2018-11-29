@@ -1,30 +1,38 @@
+.. _internals:
+
 Internals
 =========
 
+.. _data_structures:
+
 Data Structures
 ---------------
+
 
 The internal representation of the profiler information is expressed
 using a number of Python data structures that map more or less directly
 to the tables in the database. These are:
 
-- ``event``
-  This is a Python dictionary that holds metadata about individual
-  instructions in a MAL plan. In fact the MonetDB server emits two
-  such events for each instruction: one at the beginning of execution
-  and one at the end. The dictionary has the following keys:
+- ``event`` This is a Python dictionary that holds metadata about
+  individual instructions in a MAL plan. In fact the MonetDB server
+  emits two such events for each instruction: one at the beginning of
+  execution and one at the end. The dictionary has the following keys:
 
     ``session``
       The MonetDB server UUID.
+
+      This field is *always* present.
 
     ``tag``
       An increasing number, different for each query in a
       specific server. The combination of `session` and `tag`,
       uniquely identifies a query.
 
+      This field is *always* present.
+
     ``pc (program counter)``
       An increasing number, different for each instruction in the plan
-      of a query.
+      of a query. This field is *always* present.
 
     ``execution_state``
       Shows the execution state of the instruction. It takes the
@@ -34,14 +42,22 @@ to the tables in the database. These are:
       - 1: done
       - 2: pause
 
+      This field is *always* present.
+
     ``clk``
       Number of microseconds since server startup.
+
+      This field is *always* present.
 
     ``ctime``
       Number of microseconds since server UNIX epoch.
 
+      This field is *always* present.
+
     ``thread``
       Which thread executed this instruction.
+
+      This field is *always* present.
 
     ``mal_function``
       The name and the module of the function the current MAL
@@ -76,7 +92,44 @@ to the tables in the database. These are:
       The name of the MAL module this instruction belongs to. For
       example ``algebra``, ``bat``, etc.
 
+    ``version`` **(after Jan2019 version)**
+      The version of the server that produced the profiling trace.
+
 - ``variable``
+    ``type_id``
+        The database identifier of the type of the variable (see ...).
+
+    ``name``
+        The name of the variable.
+
+    ``alias``
+        (???)
+
+    ``is_persistent``
+        If the variable is persistent ``True`` or intermediate ``False``.
+
+    ``bid``
+        BAT ID(???).
+
+    ``count``
+        If the variable refers to a BAT, how many elements are in the BAT.
+
+    ``size``
+        The size of the type (???).
+
+    ``seqbase``
+        (???)
+
+    ``hghbase``
+        (???)
+	
+    ``eol``
+        If `True` then the variable can be garbage collected.
+
+    ``mal_value``
+        If the variable is scalar, this is its value.
+
+.. _error_codes:
 
 Error codes
 -----------

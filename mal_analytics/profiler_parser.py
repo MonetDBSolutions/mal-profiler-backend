@@ -61,31 +61,7 @@ class ProfilerObjectParser:
         '''Parse a single MAL variable.
 
         :param var_data: A dictionary representing the JSON description of a MAL variable.
-        :returns: a dictionary with the following fields
-
-          ``type_id``
-              The database identifier of the type of the variable (see ...).
-          ``name``
-              The name of the variable.
-          ``alias``
-              (???)
-          ``is_persistent``
-              If the variable is persistent ``True`` or intermediate ``False``.
-          ``bid``
-              BAT ID(???).
-          ``count``
-              If the variable refers to a BAT, how many elements are in the BAT.
-          ``size``
-              The size of the type (???).
-          ``seqbase``
-              (???)
-          ``hghbase``
-              (???)
-          ``eol``
-              If `True` then the variable can be garbage collected.
-          ``mal_value``
-              If the variable is scalar, this is its value.
-
+        :returns: a dictionary representing a variable. See :ref:`data_structures`.
         '''
         variable = {
             # "mal_execution_id": int(current_execution_id),
@@ -110,9 +86,9 @@ class ProfilerObjectParser:
         :param json_object: A dictionary representing a JSON object emmited by the profiler.
         :returns: a tuple of 5 items:
 
-            - A dictionary containing the event data
+            - A dictionary containing the event data (see :ref:`data_structures`)
             - A list of prerequisite event ids
-            - A list of referenced variables
+            - A list of referenced variables (see :ref:`data_structures`)
             - A list of argument variable ids
             - A list of return variable ids
         '''
@@ -181,10 +157,37 @@ class ProfilerObjectParser:
         This will create a representation ready to be inserted into the
         database.
         '''
-        executions = dict()
+        events = list()
+        variables = list()
+        prerequisite_events = list()
+
+        # This is a list that we use for deduplication of variables.
+        var_name_list = list()
+        execution = -1
         for json_event in json_stream:
             event_data, prereq_list, referenced_vars, args, lists = self._parse_event(json_event)
+            prev_execution = execution
             execution = self._get_execution_id(event_data.get('session'), event_data.get('tag'))
+            event_data['execution_id'] = execution
+            events.append(event_data)
+
+            # Variables and variable names are scoped by executions
+            # (session + tag combinations). Between different
+            # executions variables with the same name are allowed to
+            # exist.
+            if execution != prev_execution:
+                var_name_list = list()
+
+            for var_name, var in referenced_vars.items():
+                # Ignore variables that we have already seen
+                if var_name in var_name_list:
+                    continue
+
+                var['mal_execution_id'] = execution
+                variables.append(var)
+
+            for pev in prereq_list:
+                prerequisite_events.append((pev, ))
 
     def _parse_trace(self, json_object):
         pass
