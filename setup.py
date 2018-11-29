@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="malpar",
+    name="mal_analytics",
     version="0.1.dev0",
     packages=find_packages(),
     setup_requires=['pytest-runner'],
