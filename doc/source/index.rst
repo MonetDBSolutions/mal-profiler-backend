@@ -10,6 +10,7 @@ Welcome to MAL Analytics's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   internals
    modules
 
 Indices and tables
