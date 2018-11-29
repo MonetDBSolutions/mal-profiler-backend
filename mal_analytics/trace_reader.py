@@ -9,8 +9,8 @@ import bz2
 import os
 import gzip
 
-from mal_profiler.profiler_parser import ProfilerObjectParser
-from mal_profiler.create_db import execute_sql_script
+from mal_analytics.profiler_parser import ProfilerObjectParser
+from mal_analytics.create_db import execute_sql_script
 
 
 def test_gzip(filename):

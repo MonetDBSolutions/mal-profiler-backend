@@ -4,6 +4,6 @@
 #
 # Copyright MonetDB Solutions B.V. 2018
 
-from mal_profiler import create_db
-from mal_profiler import profiler_parser
-from mal_profiler import trace_reader
+from mal_analytics import create_db
+from mal_analytics import profiler_parser
+from mal_analytics import trace_reader

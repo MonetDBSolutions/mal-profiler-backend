@@ -10,8 +10,8 @@ import shutil
 import pytest
 import monetdblite
 
-from mal_profiler import create_db
-from mal_profiler import profiler_parser
+from mal_analytics import create_db
+from mal_analytics import profiler_parser
 
 
 @pytest.fixture(scope='function')

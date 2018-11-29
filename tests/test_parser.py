@@ -7,7 +7,7 @@
 import json
 
 import pytest
-from mal_profiler import exceptions
+from mal_analytics import exceptions
 
 class TestParser(object):
     def test_parse_single_variable(self, parser_object):

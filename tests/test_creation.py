@@ -6,7 +6,7 @@
 
 import os
 
-from mal_profiler import create_db
+from mal_analytics import create_db
 
 
 def test_table_creation(backend):
