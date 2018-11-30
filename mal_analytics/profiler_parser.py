@@ -11,15 +11,8 @@ import mal_analytics.exceptions as exceptions
 
 LOGGER = logging.getLogger(__name__)
 
-# This class is a *signleton*. Singletons are to be avoided in
-# general, but unfortunatelly any component communicating directly
-# with MonetDBLite should be a singleton, because of the way
-# MonetDBLite operates.
 
-# https://stackoverflow.com/a/6798042
-
-
-class ProfilerObjectParser:
+class ProfilerObjectParser(object):
     '''A parser for the MonetDB profiler traces.
 
     The purpose of this class is to turn the JSON objects that the

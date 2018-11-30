@@ -12,6 +12,7 @@ import monetdblite
 
 from mal_analytics import create_db
 from mal_analytics import profiler_parser
+from mal_analytics import db_manager
 
 
 @pytest.fixture(scope='function')
@@ -63,3 +64,11 @@ def parser_object():
     parser = profiler_parser.ProfilerObjectParser()
 
     return parser
+
+
+@pytest.fixture(scope='function')
+def manager_object(tmp_path):
+    db_path = tmp_path.resolve().as_posix()
+    manager = db_manager.DatabaseManager(db_path)
+
+    return manager

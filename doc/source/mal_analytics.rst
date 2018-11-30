@@ -37,6 +37,13 @@ mal\_analytics.trace\_reader module
     :undoc-members:
     :show-inheritance:
 
+mal\_analytics.db\_manager module
+---------------------------------
+
+.. automodule:: mal_analytics.db_manager
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Module contents
 ---------------

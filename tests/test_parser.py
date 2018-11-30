@@ -155,13 +155,6 @@ class TestParser(object):
         assert id2 >= 1
 
     @pytest.mark.skip()
-    def test_singleton_dbadapter(self, parser_object):
-        assert False
-        # connection = parser_object.get_connection()
-        # new_parser = profiler_parser.ProfilerObjectParser(connection)
-        # assert new_parser == parser_object
-
-    @pytest.mark.skip()
     def test_parse_single_trace(self, query_trace):
         assert False
 
