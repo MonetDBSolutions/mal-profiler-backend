@@ -59,7 +59,7 @@ def create_monetdb_connection():
 
 
 @pytest.fixture(scope='function')
-def parser_object(backend):
-    parser = profiler_parser.ProfilerObjectParser(backend[1])
+def parser_object():
+    parser = profiler_parser.ProfilerObjectParser()
 
     return parser

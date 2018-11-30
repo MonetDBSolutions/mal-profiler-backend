@@ -11,6 +11,13 @@ import mal_analytics.exceptions as exceptions
 
 LOGGER = logging.getLogger(__name__)
 
+# This class is a *signleton*. Singletons are to be avoided in
+# general, but unfortunatelly any component communicating directly
+# with MonetDBLite should be a singleton, because of the way
+# MonetDBLite operates.
+
+# https://stackoverflow.com/a/6798042
+
 
 class ProfilerObjectParser:
     '''A parser for the MonetDB profiler traces.
@@ -18,8 +25,9 @@ class ProfilerObjectParser:
     The purpose of this class is to turn the JSON objects that the
     MonetDB profiler emmits into a representation ready to be inserted
     into a MonetDBLite-Python trace database.
+
     '''
-    def __init__(self, connection):
+    def __init__(self):
         logging.basicConfig(level=logging.DEBUG)
         self._event_id = 0
         self._heartbeat_id = 0
@@ -27,7 +35,7 @@ class ProfilerObjectParser:
         self._execution_dict = dict()
         self._variable_id = 0
         self._states = {'start': 0, 'done': 1, 'pause': 2}
-        self._connection = connection
+        # self._connection = connection
         # All possible MAL variable types.
         # NOTE: This might need to be updated if new types are added.
         self._type_dict = {
@@ -405,3 +413,7 @@ class ProfilerObjectParser:
         except exceptions.MalParserError as e:
             LOGGER.warning("Parsing JSON Object\n  %s\nfailed:\n  %s", json_object, e.msg)
             return
+
+    # def get_connection(self):
+    #     """Get the MonetDBLite connection"""
+    #     return self._connection

@@ -40,21 +40,21 @@ def abstract_open(filename):
     return open(filename, 'r')
 
 
-def parse_trace(filename, connection):
-    cpath = os.path.dirname(os.path.abspath(__file__))
-    drop_constraints_script = os.path.join(cpath, 'data', 'drop_constraints.sql')
-    execute_sql_script(connection, drop_constraints_script)
+# def parse_trace(filename, connection):
+#     cpath = os.path.dirname(os.path.abspath(__file__))
+#     drop_constraints_script = os.path.join(cpath, 'data', 'drop_constraints.sql')
+#     execute_sql_script(connection, drop_constraints_script)
 
-    pob = ProfilerObjectParser(connection)
-    with abstract_open(filename) as fl:
-        buf = []
-        for ln in fl:
-            buf.append(ln)
-            if ln.endswith(u'}\n'):
-                json_string = ''.join(buf).strip()
-                buf = []
-                # print(json_string)
-                pob.parse_object(json_string)
+#     pob = ProfilerObjectParser(connection)
+#     with abstract_open(filename) as fl:
+#         buf = []
+#         for ln in fl:
+#             buf.append(ln)
+#             if ln.endswith(u'}\n'):
+#                 json_string = ''.join(buf).strip()
+#                 buf = []
+#                 # print(json_string)
+#                 pob.parse_object(json_string)
 
-    add_constraints_script = os.path.join(cpath, 'data', 'add_constraints.sql')
-    execute_sql_script(connection, add_constraints_script)
+#     add_constraints_script = os.path.join(cpath, 'data', 'add_constraints.sql')
+#     execute_sql_script(connection, add_constraints_script)
