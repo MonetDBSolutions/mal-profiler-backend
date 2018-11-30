@@ -13,15 +13,16 @@ drop table if exists profiler_event;
 drop table if exists mal_execution;
 
 create table mal_execution (
-       execution_id bigserial,
+       execution_id bigint,
        server_session char(36) not null,
        tag int not null,
 
+       constraint pk_mal_execution primary key (execution_id),
        constraint unique_me_mal_execution unique(server_session, tag)
 );
 
 create table profiler_event (
-       event_id bigserial,
+       event_id bigint,
        mal_execution_id bigint not null,
        pc int not null,
        execution_state tinyint not null,
@@ -37,32 +38,35 @@ create table profiler_event (
        instruction text,
        mal_module text,
 
+       constraint pk_profiler_event primary key (event_id),
        constraint fk_pe_mal_execution_id foreign key (mal_execution_id) references mal_execution(execution_id),
        -- constraint unique_event
        constraint unique_pe_profiler_event unique(mal_execution_id, pc, execution_state)
 );
 
 create table prerequisite_events (
-       prerequisite_relation_id bigserial,
+       prerequisite_relation_id bigint,
        prerequisite_event bigint,
        consequent_event bigint,
 
+       constraint pk_prerequisite_events primary key (prerequisite_relation_id),
        constraint fk_pre_prerequisite_event foreign key (prerequisite_event) references profiler_event(event_id),
        constraint fk_pre_consequent_event foreign key (consequent_event) references profiler_event(event_id)
 );
 
 create table mal_type (
-       type_id serial,
+       type_id int,
        tname text,
        base_size int,
        subtype_id int,
 
+       constraint pk_mal_type primary key (type_id),
        constraint fk_mt_subtype_id foreign key (subtype_id) references mal_type(type_id)
 );
 
 
 create table mal_variable (
-       variable_id bigserial,
+       variable_id bigint,
        name varchar(20) not null,
        mal_execution_id bigint not null,
        alias text,
@@ -76,27 +80,30 @@ create table mal_variable (
        eol bool,
        mal_value text,
 
+       constraint pk_mal_variable primary key (variable_id),
        constraint fk_mv_mal_execution_id foreign key (mal_execution_id) references mal_execution(execution_id),
        constraint fk_mv_type_id foreign key (type_id) references mal_type(type_id),
        constraint unique_mv_var_name unique (mal_execution_id, name)
 );
 
 create table return_variable_list (
-       return_list_id bigserial,
+       return_list_id bigint,
        variable_list_index int,
        event_id bigint,
        variable_id bigint,
 
+       constraint pk_return_variable_list primary key (return_list_id),
        constraint fk_rv_event_id foreign key (event_id) references profiler_event(event_id),
        constraint fk_rv_variable_id foreign key (variable_id) references mal_variable(variable_id)
 );
 
 create table argument_variable_list (
-       argument_list_id bigserial,
+       argument_list_id bigint,
        variable_list_index int,
        event_id bigint,
        variable_id bigint,
 
+       constraint pk_argument_variable_list primary key (argument_list_id),
        constraint fk_av_event_id foreign key (event_id) references profiler_event(event_id),
        constraint fk_av_variable_id foreign key (variable_id) references mal_variable(variable_id)
 );
@@ -108,49 +115,52 @@ drop table if exists cpuload;
 drop table if exists heartbeat;
 
 create table heartbeat (
-       heartbeat_id bigserial,
+       heartbeat_id bigint,
        server_session char(36) not null,
        clk bigint,
        ctime bigint,
        rss int,
        -- Non voluntary context switch
-       nvcsw int
+       nvcsw int,
+
+       constraint pk_heartbeat primary key (heartbeat_id)
 );
 
 create table cpuload (
-       cpuload_id bigserial,
+       cpuload_id bigint,
        heartbeat_id bigint,
        val decimal(3, 2),
 
+       constraint pk_cpuload primary key (cpuload_id),
        constraint fk_cl_heartbeat_id foreign key (heartbeat_id) references heartbeat(heartbeat_id)
 );
 commit;
 
 
 start transaction;
-insert into mal_type (tname, base_size) values ('bit', 1);                          -- 1
-insert into mal_type (tname, base_size) values ('bte', 1);                          -- 2
-insert into mal_type (tname, base_size) values ('sht', 2);                          -- 3
-insert into mal_type (tname, base_size) values ('int', 4);                          -- 4
-insert into mal_type (tname, base_size) values ('lng', 8);                          -- 5
-insert into mal_type (tname, base_size) values ('hge', 16);                         -- 6
-insert into mal_type (tname, base_size) values ('oid', 8);                          -- 7
-insert into mal_type (tname, base_size) values ('flt', 8);                          -- 8
-insert into mal_type (tname, base_size) values ('dbl', 16);                         -- 9
-insert into mal_type (tname, base_size) values ('str', -1);                         -- 10
-insert into mal_type (tname, base_size) values ('date', -1);                        -- 11
-insert into mal_type (tname, base_size) values ('void', 0);                         -- 12
-insert into mal_type (tname, base_size) values ('BAT', 0);                          -- 13
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:bit]', 1, 1);     -- 14
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:bte]', 1, 2);     -- 15
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:sht]', 2, 3);     -- 16
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:int]', 4, 4);     -- 17
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:lng]', 8, 5);     -- 18
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:hge]', 16, 6);    -- 19
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:oid]', 8, 7);     -- 20
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:flt]', 8, 8);     -- 21
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:dbl]', 16, 9);    -- 22
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:str]', -1, 10);   -- 23
-insert into mal_type (tname, base_size, subtype_id) values ('bat[:date]', -1, 11);  -- 24
+insert into mal_type (type_id, tname, base_size) values ( 1, 'bit', 1);                          -- 1
+insert into mal_type (type_id, tname, base_size) values ( 2, 'bte', 1);                          -- 2
+insert into mal_type (type_id, tname, base_size) values ( 3, 'sht', 2);                          -- 3
+insert into mal_type (type_id, tname, base_size) values ( 4, 'int', 4);                          -- 4
+insert into mal_type (type_id, tname, base_size) values ( 5, 'lng', 8);                          -- 5
+insert into mal_type (type_id, tname, base_size) values ( 6, 'hge', 16);                         -- 6
+insert into mal_type (type_id, tname, base_size) values ( 7, 'oid', 8);                          -- 7
+insert into mal_type (type_id, tname, base_size) values ( 8, 'flt', 8);                          -- 8
+insert into mal_type (type_id, tname, base_size) values ( 9, 'dbl', 16);                         -- 9
+insert into mal_type (type_id, tname, base_size) values (10, 'str', -1);                         -- 10
+insert into mal_type (type_id, tname, base_size) values (11, 'date', -1);                        -- 11
+insert into mal_type (type_id, tname, base_size) values (12, 'void', 0);                         -- 12
+insert into mal_type (type_id, tname, base_size) values (13, 'BAT', 0);                          -- 13
+insert into mal_type (type_id, tname, base_size, subtype_id) values (14, 'bat[:bit]', 1, 1);     -- 14
+insert into mal_type (type_id, tname, base_size, subtype_id) values (15, 'bat[:bte]', 1, 2);     -- 15
+insert into mal_type (type_id, tname, base_size, subtype_id) values (16, 'bat[:sht]', 2, 3);     -- 16
+insert into mal_type (type_id, tname, base_size, subtype_id) values (17, 'bat[:int]', 4, 4);     -- 17
+insert into mal_type (type_id, tname, base_size, subtype_id) values (18, 'bat[:lng]', 8, 5);     -- 18
+insert into mal_type (type_id, tname, base_size, subtype_id) values (19, 'bat[:hge]', 16, 6);    -- 19
+insert into mal_type (type_id, tname, base_size, subtype_id) values (20, 'bat[:oid]', 8, 7);     -- 20
+insert into mal_type (type_id, tname, base_size, subtype_id) values (21, 'bat[:flt]', 8, 8);     -- 21
+insert into mal_type (type_id, tname, base_size, subtype_id) values (22, 'bat[:dbl]', 16, 9);    -- 22
+insert into mal_type (type_id, tname, base_size, subtype_id) values (23, 'bat[:str]', -1, 10);   -- 23
+insert into mal_type (type_id, tname, base_size, subtype_id) values (24, 'bat[:date]', -1, 11);  -- 24
 
 commit;
