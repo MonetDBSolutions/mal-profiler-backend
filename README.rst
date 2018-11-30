@@ -2,11 +2,11 @@
 Python MAL analytics
 ====================
 
-.. image:: https://travis-ci.org/MonetDBSolutions/mal-profiler-backend.svg?branch=master
-    :target: https://travis-ci.org/MonetDBSolutions/mal-profiler-backend
+.. image:: https://travis-ci.org/MonetDBSolutions/mal_analytics.svg?branch=master
+    :target: https://travis-ci.org/MonetDBSolutions/mal_analytics
 
-.. image:: https://coveralls.io/repos/github/MonetDBSolutions/mal-profiler-backend/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/MonetDBSolutions/mal-profiler-backend?branch=master
+.. image:: https://coveralls.io/repos/github/MonetDBSolutions/mal_analytics/badge.svg?branch=master&service=github
+    :target: https://coveralls.io/github/MonetDBSolutions/mal_analytics?branch=master
 
 Introduction
 ============
