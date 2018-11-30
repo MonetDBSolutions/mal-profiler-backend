@@ -8,16 +8,19 @@ import json
 
 import pytest
 from mal_analytics import exceptions
+from mal_analytics import profiler_parser
 
 class TestParser(object):
     def test_parse_single_variable(self, parser_object):
         '''Test parsing of a single variable'''
-        json_input_str = """{"index":"0","name":"C_1502","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":"0","count":"0","size":0,"eol":0}"""
+        json_input_str = """{"index":0,"name":"C_1502","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":0,"count":0,"size":0,"eol":0}"""
         json_input = json.loads(json_input_str)
 
-        variable = parser_object._parse_variable(json_input)
+        execution_id = 42
+        variable = parser_object._parse_variable(json_input, execution_id)
         variable_truth = {
             "name": "C_1502",
+            "mal_execution_id": execution_id,
             "alias": "sys.lineitem.l_shipdate",
             "is_persistent": False,
             "size": 0,
@@ -26,132 +29,105 @@ class TestParser(object):
             "mal_value": None,
             "type_id": 20,
             "eol": False,
-            # TODO: fix type in MonetDB server
-            "bid": "0",
-            "count": "0",
+            "bid": 0,
+            "count": 0,
+            "parent": None
         }
 
         assert len(variable) == len(variable_truth)
-        for k, v in variable_truth.items():
-            assert variable.get(k) == v
+        for k, v in variable.items():
+            assert variable_truth.get(k) == v, "Assertion failed for field '{}'".format(k)
 
     def test_parse_single_event(self, parser_object):
         """Test parsing a single event"""
-        json_input_str = """{"source":"trace","version":"11.32.0 (hg id: 903396fca5 (git))","clk":1073703375,"ctime":1532603484932132,"thread":15,"function":"user.main","pc":46,"tag":214,"session":"dc2c13b3-8bde-4706-8ee5-60703a176325","state":"start","usec":0,"rss":1969,"size":0,"nvcsw":1,"stmt":"C_1502=nil:bat[:oid] := algebra.thetaselect(X_1338=<tmp_3010>[18751184]:bat[:date], C_283=<tmp_2056>[18751184]:bat[:oid], \\\"1998-08-22\\\":date, \\\"<=\\\":str);","short":"C_1502[0]:= thetaselect( X_1338[18751184], C_283[18751184], 1998-08-22, \\\"<=\\\" )","prereq":[44,45],"ret":[{"index":"0","name":"C_1502","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":"0","count":"0","size":0,"eol":0}],"arg":[{"index":"1","name":"X_1338","alias":"sys.lineitem.l_shipdate","type":"bat[:date]","view":"true","parent":"787","seqbase":"18751184","hghbase":"37502368","kind":"persistent","bid":"1544","count":"18751184","size":75004736,"eol":1},{"index":"2","name":"C_283","type":"bat[:oid]","kind":"transient","bid":"1070","count":"18751184","size":0,"eol":1},{"index":"3","name":"X_265","type":"date","value":"1998-08-22","eol":0},{"index":"4","name":"X_72","type":"str","value":"\\\"<=\\\"","eol":0}]}"""
+        json_input_str = """{"version":"11.32.0 (hg id: 903396fca5 (git))","source":"trace","clk":27720582,"ctime":1543501117800118,"thread":44,"function":"user.s0_1","pc":2027,"tag":9,"module":"algebra","instruction":"thetaselect","session":"cd31712f-032b-486e-86c4-f6f445d1394d","state":"start","usec":0,"rss":101,"size":0,"stmt":"C_2622=nil:bat[:oid] := algebra.thetaselect(X_2373=<tmp_544>[100020]:bat[:date], C_394=<tmp_272>[100020]:bat[:oid], \\\"1992-12-11\\\":date, \\\"<=\\\":str);","short":"C_2622[0]:= thetaselect( X_2373[100020], C_394[100020], 1992-12-11, \\\"<=\\\" )","prereq":[2025,2026],"ret":[{"index":0,"name":"C_2622","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":0,"count":0,"size":0,"eol":0}],"arg":[{"index":1,"name":"X_2373","alias":"sys.lineitem.l_shipdate","type":"bat[:date]","view":"true","parent":798,"seqbase":5601120,"hghbase":5701140,"kind":"persistent","bid":356,"count":100020,"size":400080,"eol":1},{"index":2,"name":"C_394","type":"bat[:oid]","kind":"transient","bid":186,"count":100020,"size":0,"eol":1},{"index":3,"name":"X_262","type":"date","value":"1992-12-11","eol":0},{"index":4,"name":"X_69","type":"str","value":"\\\"<=\\\"","eol":0}]}"""
         json_input = json.loads(json_input_str)
 
         event_data, prereq_list, variables, arg_vars, ret_vars = parser_object._parse_event(json_input)
         event_data_truth = {
+            "event_id": 1,
+            "mal_execution_id": 1,
             "version": "11.32.0 (hg id: 903396fca5 (git))",
-            "session": "dc2c13b3-8bde-4706-8ee5-60703a176325",
-            "tag": 214,
-            "pc": 46,
+            "pc": 2027,
             "execution_state": 0,
-            "clk": 1073703375,
-            "ctime": 1532603484932132,
-            "thread": 15,
-            "mal_function": "user.main",
+            "clk": 27720582,
+            "ctime": 1543501117800118,
+            "thread": 44,
+            "mal_function": "user.s0_1",
             "usec": 0,
-            "rss": 1969,
+            "rss": 101,
             "size": 0,
-            "long_statement": "C_1502=nil:bat[:oid] := algebra.thetaselect(X_1338=<tmp_3010>[18751184]:bat[:date], C_283=<tmp_2056>[18751184]:bat[:oid], \"1998-08-22\":date, \"<=\":str);",
-            "short_statement": "C_1502[0]:= thetaselect( X_1338[18751184], C_283[18751184], 1998-08-22, \"<=\" )",
-            "instruction": None,
-            "module": None
+            "long_statement": "C_2622=nil:bat[:oid] := algebra.thetaselect(X_2373=<tmp_544>[100020]:bat[:date], C_394=<tmp_272>[100020]:bat[:oid], \"1992-12-11\":date, \"<=\":str);",
+            "short_statement": "C_2622[0]:= thetaselect( X_2373[100020], C_394[100020], 1992-12-11, \"<=\" )",
+            "instruction": "thetaselect",
+            "mal_module": "algebra"
         }
-        prereq_list_truth = [44, 45]
+        prereq_list_truth = [2025, 2026]
         variables_truth = {
-            "X_1338": {
-                "name": "X_1338",
+            "C_2622": {
+                "name": "C_2622",
                 "alias": "sys.lineitem.l_shipdate",
-                "is_persistent": True,
-                "size": 75004736,
-                "seqbase": "18751184",
-                "hghbase": "37502368",
-                "mal_value": None,
+                "type_id": 20,
+                "bid": 0,
+                "count": 0,
+                "size": 0,
+                "eol": 0
+            },
+            "X_2373": {
+                "name": "X_2373",
+                "alias": "sys.lineitem.l_shipdate",
                 "type_id": 24,
-                "eol": True,
-                # TODO: fix type in MonetDB server
-                "bid": "1544",
-                "count": "18751184",
+                "parent": 798,
+                "seqbase": 5601120,
+                "hghbase": 5701140,
+                "is_persistent": True,
+                "bid": 356,
+                "count": 100020,
+                "size": 400080,
+                "eol": 1
             },
-            "C_283": {
-                "name": "C_283",
-                "alias": None,
-                "is_persistent": False,
-                "size": 0,
-                "seqbase": None,
-                "hghbase": None,
-                "mal_value": None,
+            "C_394": {
+                "name": "C_394",
                 "type_id": 20,
-                "eol": True,
-                # TODO: fix type in MonetDB server
-                "bid": "1070",
-                "count": "18751184",
-            },
-            "X_265": {
-                "name": "X_265",
-                "alias": None,
                 "is_persistent": False,
+                "bid": 186,
+                "count": 100020,
                 "size": 0,
-                "seqbase": None,
-                "hghbase": None,
-                "mal_value": "1998-08-22",
+                "eol": 1
+            },
+            "X_262": {
+                "name": "X_262",
                 "type_id": 11,
-                "eol": False,
-                # TODO: fix type in MonetDB server
-                "bid": None,
-                "count": None,
+                "mal_value": "1992-12-11",
+                "eol": 0
             },
-            "X_72": {
-                "name": "X_72",
-                "alias": None,
-                "is_persistent": False,
-                "size": 0,
-                "seqbase": None,
-                "hghbase": None,
-                "mal_value": '"<="',
+            "X_69": {
+                "name": "X_69",
                 "type_id": 10,
-                "eol": False,
-                # TODO: fix type in MonetDB server
-                "bid": None,
-                "count": None,
-            },
-            "C_1502": {
-                "name": "C_1502",
-                "alias": "sys.lineitem.l_shipdate",
-                "is_persistent": False,
-                "size": 0,
-                "seqbase": None,
-                "hghbase": None,
-                "mal_value": None,
-                "type_id": 20,
-                "eol": False,
-                # TODO: fix type in MonetDB server
-                "bid": "0",
-                "count": "0",
-            },
+                "mal_value": "\"<=\"",
+                "eol": 0
+            }
         }
-        arg_vars_truth = ["X_1338", "C_283", "X_265", "X_72"]
-        ret_vars_truth = ["C_1502"]
+        arg_vars_truth = ["X_2373", "C_394", "X_262", "X_69"]
+        ret_vars_truth = ["C_2622"]
 
         assert len(event_data) == len(event_data_truth)
         for k, v in event_data_truth.items():
-            assert event_data.get(k) == v
+            assert event_data.get(k) == v, "Failed for key '{}'".format(k)
 
         assert len(prereq_list_truth) == len(prereq_list)
         for v in prereq_list_truth:
-            assert v in prereq_list
+            assert v in prereq_list, "Prerequisite event {} missing from list".format(v)
 
         assert len(variables_truth) == len(variables)
         for var, var_dict in variables_truth.items():
-            assert var in variables
+            assert var in variables, "Variable {} missing from variable list".format(var)
             for k, v in var_dict.items():
-                assert variables.get(var).get(k) == v
+                assert variables.get(var).get(k) == v, "{}.get('{}') != {}".format(var, k, v)
 
         assert len(arg_vars_truth) == len(arg_vars)
         for v in arg_vars_truth:
-            assert v in arg_vars
+            assert v in arg_vars, "Variable {} missing from "
 
         assert len(ret_vars_truth) == len(ret_vars)
         for v in ret_vars_truth:
@@ -163,7 +139,6 @@ class TestParser(object):
         json_input = json.loads(json_input_str)
         with pytest.raises(exceptions.MalParserError):
             event_data, prereq_list, variables, arg_vars, ret_vars = parser_object._parse_event(json_input)
-
 
     def test_execution_id(self, parser_object):
         tag1 = 1
@@ -178,6 +153,13 @@ class TestParser(object):
         assert id2 != id3
         assert id1 >= 1
         assert id2 >= 1
+
+    @pytest.mark.skip()
+    def test_singleton_dbadapter(self, parser_object):
+        assert False
+        # connection = parser_object.get_connection()
+        # new_parser = profiler_parser.ProfilerObjectParser(connection)
+        # assert new_parser == parser_object
 
     @pytest.mark.skip()
     def test_parse_single_trace(self, query_trace):

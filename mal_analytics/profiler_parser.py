@@ -26,14 +26,18 @@ class ProfilerObjectParser:
     MonetDB profiler emmits into a representation ready to be inserted
     into a MonetDBLite-Python trace database.
 
+    :param execution_id: The maximum execution id in the database
+    :param event_id: The maximum event id in the database
+    :param variable_id: The maximum variable id in the database
+    :param heartbeat_id: The maximum heartbeat id in the database
     '''
-    def __init__(self):
+    def __init__(self, execution_id=0, event_id=0, variable_id=0, heartbeat_id=0):
         logging.basicConfig(level=logging.DEBUG)
-        self._event_id = 0
-        self._heartbeat_id = 0
-        self._next_execution_id = 0
+        self._execution_id = execution_id
+        self._event_id = event_id
+        self._variable_id = variable_id
+        self._heartbeat_id = heartbeat_id
         self._execution_dict = dict()
-        self._variable_id = 0
         self._states = {'start': 0, 'done': 1, 'pause': 2}
         # self._connection = connection
         # All possible MAL variable types.
@@ -65,14 +69,14 @@ class ProfilerObjectParser:
             'bat[:date]': 24,
         }
 
-    def _parse_variable(self, var_data):
+    def _parse_variable(self, var_data, current_execution_id):
         '''Parse a single MAL variable.
 
         :param var_data: A dictionary representing the JSON description of a MAL variable.
         :returns: a dictionary representing a variable. See :ref:`data_structures`.
         '''
         variable = {
-            # "mal_execution_id": int(current_execution_id),
+            "mal_execution_id": current_execution_id,
             "type_id": self._type_dict.get(var_data.get("type"), -1),
             "name": var_data.get('name'),
             "alias": var_data.get('alias'),
@@ -83,7 +87,8 @@ class ProfilerObjectParser:
             "seqbase": var_data.get('seqbase'),
             "hghbase": var_data.get('hghbase'),
             "eol": var_data.get('eol') == 1,
-            "mal_value": var_data.get('value')
+            "mal_value": var_data.get('value'),
+            "parent": var_data.get('parent')
         }
 
         return variable
@@ -101,9 +106,12 @@ class ProfilerObjectParser:
             - A list of return variable ids
         '''
 
+        self._event_id += 1
+        current_execution_id = self._get_execution_id(json_object.get("tag"),
+                                                      json_object.get("session"))
         event_data = {
-            "session": json_object.get("session"),
-            "tag": json_object.get("tag"),
+            "event_id": self._event_id,
+            "mal_execution_id": current_execution_id,
             "pc": json_object.get("pc"),
             "execution_state": self._states.get(json_object.get("state")),
             "clk": json_object.get("clk"),
@@ -128,7 +136,7 @@ class ProfilerObjectParser:
 
         for var_kind in ["arg", "ret"]:
             for item in json_object.get(var_kind, []):
-                parsed_var = self._parse_variable(item)
+                parsed_var = self._parse_variable(item, current_execution_id)
                 var_name = parsed_var.get('name')
                 if var_name is None:
                     raise exceptions.MalParserError('Unnamed variable')
@@ -153,8 +161,8 @@ class ProfilerObjectParser:
         key = "{}:{}".format(session, tag)
         execution_id = self._execution_dict.get(key)
         if execution_id is None:
-            self._next_execution_id += 1
-            execution_id = self._next_execution_id
+            self._execution_id += 1
+            execution_id = self._execution_id
             self._execution_dict[key] = execution_id
 
         return execution_id
@@ -195,7 +203,7 @@ class ProfilerObjectParser:
                 variables.append(var)
 
             for pev in prereq_list:
-                prerequisite_events.append((pev, ))
+                prerequisite_events.append((pev, event_data['event_id']))
 
     def _parse_trace(self, json_object):
         pass
@@ -209,12 +217,12 @@ class ProfilerObjectParser:
         # current_session = json_object['session']
         # current_tag = json_object['tag']
         # if cnt == 0:
-        #     self._next_execution_id += 1
+        #     self._execution_id += 1
         #     LOGGER.debug("Creating execution %d for session %s, tag %d",
-        #                  self._next_execution_id,
+        #                  self._execution_id,
         #                  json_object['session'],
         #                  json_object['tag'])
-        #     self._execution_dict["{}:{}".format(current_session, current_tag)] = self._next_execution_id
+        #     self._execution_dict["{}:{}".format(current_session, current_tag)] = self._execution_id
         #     # keep
         #     cursor.execute("INSERT INTO mal_execution(server_session, tag) VALUES (%s, %s)",
         #                    [json_object['session'], json_object['tag']])
