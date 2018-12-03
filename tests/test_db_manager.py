@@ -13,4 +13,4 @@ class TestDatabaseManager(object):
     def test_singleton_dbadapter(self, manager_object):
         dbpath = manager_object.get_dbpath()
         new_parser = db_manager.DatabaseManager(dbpath)
-        assert new_parser == manager_object
+        assert new_parser is manager_object
