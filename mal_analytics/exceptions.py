@@ -6,7 +6,7 @@
 
 
 class MalParserError(Exception):
-    """Base class for any exception"""
+    """Base class for any parser exception"""
     pass
 
 
@@ -15,4 +15,12 @@ class IntegrityConstraintViolation(MalParserError):
 
 
 class MissingDataError(MalParserError):
+    pass
+
+
+class DatabaseManagerError(Exception):
+    pass
+
+
+class InitializationError(DatabaseManagerError):
     pass

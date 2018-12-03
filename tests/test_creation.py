@@ -5,45 +5,55 @@
 # Copyright MonetDB Solutions B.V. 2018
 
 import os
+import monetdblite
+import pytest
 
 from mal_analytics import DatabaseManager
 
 
-def test_table_creation(manager_object):
-    '''Make sure that all the tables get created correctly'''
+class TestCreation(object):
+    def test_table_creation(self, manager_object):
+        '''Make sure that all the tables get created correctly'''
 
-    cursor = manager_object.get_cursor()
-    tables = [
-        'mal_execution',
-        'profiler_event',
-        'prerequisite_events',
-        'mal_type',
-        'mal_variable',
-        'return_variable_list',
-        'argument_variable_list',
-        'heartbeat',
-        'cpuload'
-    ]
-    for tbl in tables:
-        rslt = cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)
-        assert rslt == 1
+        cursor = manager_object.get_cursor()
+        tables = [
+            'mal_execution',
+            'profiler_event',
+            'prerequisite_events',
+            'mal_type',
+            'mal_variable',
+            'return_variable_list',
+            'argument_variable_list',
+            'heartbeat',
+            'cpuload'
+        ]
+        for tbl in tables:
+            rslt = cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)
+            assert rslt == 1
 
-    cursor.close()
+        cursor.close()
 
+    def test_restart(self, manager_object):
+        db_directory = manager_object.get_dbpath()
+        manager_object.close_connection()
+        new_manager = DatabaseManager(db_directory)
+        self.test_table_creation(new_manager)
 
-def test_restart(manager_object):
-    db_directory = manager_object.get_dbpath()
-    manager_object.close_connection()
-    new_manager = DatabaseManager(db_directory)
-    test_table_creation(new_manager)
+    def test_sql_execution(self, manager_object):
+        spath = os.path.dirname(os.path.abspath(__file__))
+        manager_object.execute_sql_script(os.path.join(spath, 'data', 'test_sql_script.sql'))
+        cursor = manager_object.get_cursor()
 
+        rslt = cursor.execute("SELECT tag FROM mal_execution")
+        assert rslt == 6
+        rslt = cursor.execute("SELECT tag FROM mal_execution WHERE server_session='a11bd16e-dc2d-11e8-aa5e-e4b318554ad8'")
+        assert rslt == 3
 
-def test_sql_execution(manager_object):
-    spath = os.path.dirname(os.path.abspath(__file__))
-    manager_object.execute_sql_script(os.path.join(spath, 'data', 'test_sql_script.sql'))
-    cursor = manager_object.get_cursor()
+    def test_reinitialization(self, manager_object):
+        db_directory = manager_object.get_dbpath()
+        manager_object.close_connection()
+        del manager_object
 
-    rslt = cursor.execute("SELECT tag FROM mal_execution")
-    assert rslt == 6
-    rslt = cursor.execute("SELECT tag FROM mal_execution WHERE server_session='a11bd16e-dc2d-11e8-aa5e-e4b318554ad8'")
-    assert rslt == 3
+        new_manager = DatabaseManager(db_directory)
+        with pytest.raises(monetdblite.DatabaseError):
+            self.test_sql_execution(new_manager)

@@ -52,7 +52,28 @@ class DatabaseManager(object, metaclass=Singleton):
         # TODO define an abstract root data directory
         cpath = os.path.dirname(os.path.abspath(__file__))
         tables_file = os.path.join(cpath, 'data', 'tables.sql')
-        self.execute_sql_script(tables_file)
+        try:
+            self.execute_sql_script(tables_file)
+        except monetdblite.Error as e:
+            LOGGER.warning("Table initialization script failed:\n  %s", e)
+
+        tables = [
+            'mal_execution',
+            'profiler_event',
+            'prerequisite_events',
+            'mal_type',
+            'mal_variable',
+            'return_variable_list',
+            'argument_variable_list',
+            'heartbeat',
+            'cpuload'
+        ]
+        cursor = self.get_cursor()
+        for tbl in tables:
+            rslt = cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)
+            # This should never happen
+            if rslt != 1:
+                raise InitializationError("Did not find table %s in database %s", tbl, self.get_dbpath)
 
     def get_dbpath(self):
         """Get the directory of the database.
