@@ -24,6 +24,7 @@ class ProfilerObjectParser(object):
     :param variable_id: The maximum variable id in the database
     :param heartbeat_id: The maximum heartbeat id in the database
     '''
+
     def __init__(self, execution_id=0, event_id=0, variable_id=0, heartbeat_id=0):
         logging.basicConfig(level=logging.DEBUG)
         self._execution_id = execution_id
@@ -66,7 +67,7 @@ class ProfilerObjectParser(object):
         '''Parse a single MAL variable.
 
         :param var_data: A dictionary representing the JSON description of a MAL variable.
-        :returns: a dictionary representing a variable. See :ref:`data_structures`.
+        :returns: A dictionary representing a variable. See :ref:`data_structures`.
         '''
         variable = {
             "mal_execution_id": current_execution_id,

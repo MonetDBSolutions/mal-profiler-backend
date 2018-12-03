@@ -6,13 +6,13 @@
 
 import os
 
-from mal_analytics import create_db
+from mal_analytics import DatabaseManager
 
 
-def test_table_creation(backend):
+def test_table_creation(manager_object):
     '''Make sure that all the tables get created correctly'''
 
-    cursor = backend[1].cursor()
+    cursor = manager_object.get_cursor()
     tables = [
         'mal_execution',
         'profiler_event',
@@ -31,17 +31,17 @@ def test_table_creation(backend):
     cursor.close()
 
 
-def test_restart(backend):
-    backend[1].close()
-    connection = create_db.start_backend(backend[0])
-    test_table_creation((backend[0], connection))
-    connection.close()
+def test_restart(manager_object):
+    db_directory = manager_object.get_dbpath()
+    manager_object.close_connection()
+    new_manager = DatabaseManager(db_directory)
+    test_table_creation(new_manager)
 
 
-def test_sql_execution(backend):
+def test_sql_execution(manager_object):
     spath = os.path.dirname(os.path.abspath(__file__))
-    create_db.execute_sql_script(backend[1], os.path.join(spath, 'data', 'test_sql_script.sql'))
-    cursor = backend[1].cursor()
+    manager_object.execute_sql_script(os.path.join(spath, 'data', 'test_sql_script.sql'))
+    cursor = manager_object.get_cursor()
 
     rslt = cursor.execute("SELECT tag FROM mal_execution")
     assert rslt == 6

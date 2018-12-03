@@ -5,32 +5,11 @@
 # Copyright MonetDB Solutions B.V. 2018
 
 import os
-import shutil
 
 import pytest
-import monetdblite
 
-from mal_analytics import create_db
 from mal_analytics import profiler_parser
 from mal_analytics import db_manager
-
-
-@pytest.fixture(scope='function')
-def backend(request, tmp_path):
-    """Initialize the backend"""
-    db_path = tmp_path.resolve().as_posix()
-    # print("Initializind directory: {}".format(db_path))
-
-    def finalizer():
-        connection.close()
-        monetdblite.shutdown()
-        if tmp_path.is_dir():
-            shutil.rmtree(db_path)
-
-    request.addfinalizer(finalizer)
-    connection = create_db.init_backend(db_path)
-
-    return (db_path, connection)
 
 
 @pytest.fixture(scope='module')

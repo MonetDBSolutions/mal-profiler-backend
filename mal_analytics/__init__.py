@@ -7,3 +7,6 @@
 from mal_analytics import create_db
 from mal_analytics import profiler_parser
 from mal_analytics import trace_reader
+
+from mal_analytics.profiler_parser import ProfilerObjectParser
+from mal_analytics.db_manager import DatabaseManager

@@ -6,11 +6,7 @@
 
 import binascii
 import bz2
-import os
 import gzip
-
-from mal_analytics.profiler_parser import ProfilerObjectParser
-from mal_analytics.create_db import execute_sql_script
 
 
 def test_gzip(filename):

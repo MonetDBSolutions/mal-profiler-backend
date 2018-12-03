@@ -26,9 +26,9 @@ def start_backend(dbpath):
     return connection
 
 
-def execute_sql_script(connection, script_path):
-    with open(script_path) as sql_fl:
-        sql_in = sql_fl.read()
+# def execute_sql_script(connection, script_path):
+#     with open(script_path) as sql_fl:
+#         sql_in = sql_fl.read()
 
-    for stmt in sql_in.split(';')[:-1]:
-        connection.execute(stmt)
+#     for stmt in sql_in.split(';')[:-1]:
+#         connection.execute(stmt)
