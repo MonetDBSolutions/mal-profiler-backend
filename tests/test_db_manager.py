@@ -12,5 +12,5 @@ from mal_analytics import db_manager
 class TestDatabaseManager(object):
     def test_singleton_dbadapter(self, manager_object):
         dbpath = manager_object.get_dbpath()
-        new_parser = db_manager.DatabaseManager(dbpath)
-        assert new_parser is manager_object
+        new_manager = db_manager.DatabaseManager(dbpath)
+        assert new_manager is manager_object, "Objects are not the same"
