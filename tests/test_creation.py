@@ -51,9 +51,18 @@ class TestCreation(object):
 
     def test_reinitialization(self, manager_object):
         db_directory = manager_object.get_dbpath()
+        spath = os.path.dirname(os.path.abspath(__file__))
+        manager_object.execute_sql_script(os.path.join(spath, 'data', 'test_sql_script.sql'))
         manager_object.close_connection()
-        del manager_object
 
         new_manager = DatabaseManager(db_directory)
-        with pytest.raises(monetdblite.DatabaseError):
-            self.test_sql_execution(new_manager)
+        cursor = new_manager.get_cursor()
+        rslt = cursor.execute("SELECT tag FROM mal_execution")
+        assert rslt == 6
+        rslt = cursor.execute("SELECT tag FROM mal_execution WHERE server_session='a11bd16e-dc2d-11e8-aa5e-e4b318554ad8'")
+        assert rslt == 3
+
+    def test_double_initialize_table_indempotence(self, manager_object):
+        manager_object._initialize_tables()
+
+        self.test_table_creation(manager_object)

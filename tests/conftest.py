@@ -5,7 +5,6 @@
 # Copyright MonetDB Solutions B.V. 2018
 
 import os
-
 import pytest
 
 from mal_analytics import profiler_parser
@@ -34,11 +33,6 @@ def single_event():
 
 
 @pytest.fixture(scope='function')
-def create_monetdb_connection():
-    yield None
-
-
-@pytest.fixture(scope='function')
 def parser_object():
     parser = profiler_parser.ProfilerObjectParser()
 
@@ -49,5 +43,11 @@ def parser_object():
 def manager_object(tmp_path):
     db_path = tmp_path.resolve().as_posix()
     manager = db_manager.DatabaseManager(db_path)
+
+    # We got the singleton but we really want a fresh object. Make it so.
+    if manager.get_dbpath() != db_path:
+        manager.close_connection()
+        manager.__class__._instances = {}
+        manager = db_manager.DatabaseManager(db_path)
 
     return manager

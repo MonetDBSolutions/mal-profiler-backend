@@ -14,3 +14,20 @@ class TestDatabaseManager(object):
         dbpath = manager_object.get_dbpath()
         new_manager = db_manager.DatabaseManager(dbpath)
         assert new_manager is manager_object, "Objects are not the same"
+
+    def test_execute_query(self, manager_object):
+        result = manager_object.execute_query("SELECT count(*) FROM profiler_event")
+        assert result == [[0]]
+
+    def test_execute_bad_query(self, manager_object):
+        result = manager_object.execute_query("This is not a correct SQL query")
+        assert result is None
+
+    def test_limits_empty_db(self, manager_object):
+        # result = manager_object.execute_query("SELECT * FROM mal_execution")
+        # print(result)
+        (exid, evid, varid, hbid) = manager_object.get_limits()
+        assert exid == 0
+        assert evid == 0
+        assert varid == 0
+        assert hbid == 0

@@ -8,6 +8,8 @@ import logging
 import os
 import monetdblite
 
+from mal_analytics.exceptions import InitializationError
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -56,6 +58,7 @@ class DatabaseManager(object, metaclass=Singleton):
             self.execute_sql_script(tables_file)
         except monetdblite.Error as e:
             LOGGER.warning("Table initialization script failed:\n  %s", e)
+            self._connection.rollback()
 
         tables = [
             'mal_execution',
@@ -114,18 +117,18 @@ class DatabaseManager(object, metaclass=Singleton):
         execution_id_query = "SELECT MAX(execution_id) FROM mal_execution"
         event_id_query = "SELECT MAX(event_id) FROM profiler_event"
         variable_id_query = "SELECT MAX(variable_id) FROM mal_variable"
-        heartbeat_id_query = "SELECT MAX(heart_id) FROM heartbeat"
+        heartbeat_id_query = "SELECT MAX(heartbeat_id) FROM heartbeat"
 
         results = self.execute_query(execution_id_query)
-        execution_id = results[0] if results is not None else 0
+        execution_id = results[0][0] if results[0][0] is not None else 0
 
         results = self.execute_query(event_id_query)
-        event_id = results[0] if results is not None else 0
+        event_id = results[0][0] if results[0][0] is not None else 0
 
         results = self.execute_query(variable_id_query)
-        variable_id = results[0] if results is not None else 0
+        variable_id = results[0][0] if results[0][0] is not None else 0
 
         results = self.execute_query(heartbeat_id_query)
-        heartbeat_id = results[0] if results is not None else 0
+        heartbeat_id = results[0][0] if results[0][0] is not None else 0
 
         return (execution_id, event_id, variable_id, heartbeat_id)
