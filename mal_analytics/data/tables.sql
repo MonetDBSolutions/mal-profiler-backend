@@ -4,14 +4,6 @@
 
 start transaction;
 
-drop table if exists argument_variable_list;
-drop table if exists return_variable_list;
-drop table if exists mal_variable;
-drop table if exists mal_type;
-drop table if exists prerequisite_events;
-drop table if exists profiler_event;
-drop table if exists mal_execution;
-
 create table mal_execution (
        execution_id bigint,
        server_session char(36) not null,
@@ -111,8 +103,6 @@ create table argument_variable_list (
 commit;
 
 start transaction;
-drop table if exists cpuload;
-drop table if exists heartbeat;
 
 create table heartbeat (
        heartbeat_id bigint,
