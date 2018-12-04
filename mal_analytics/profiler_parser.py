@@ -15,15 +15,15 @@ LOGGER = logging.getLogger(__name__)
 class ProfilerObjectParser(object):
     '''A parser for the MonetDB profiler traces.
 
-    The purpose of this class is to turn the JSON objects that the
-    MonetDB profiler emmits into a representation ready to be inserted
-    into a MonetDBLite-Python trace database.
+The purpose of this class is to turn the JSON objects that the
+MonetDB profiler emmits into a representation ready to be inserted
+into a MonetDBLite-Python trace database.
 
-    :param execution_id: The maximum execution id in the database
-    :param event_id: The maximum event id in the database
-    :param variable_id: The maximum variable id in the database
-    :param heartbeat_id: The maximum heartbeat id in the database
-    '''
+:param execution_id: The maximum execution id in the database
+:param event_id: The maximum event id in the database
+:param variable_id: The maximum variable id in the database
+:param heartbeat_id: The maximum heartbeat id in the database
+'''
 
     def __init__(self, execution_id=0, event_id=0, variable_id=0, heartbeat_id=0):
         logging.basicConfig(level=logging.DEBUG)
@@ -66,9 +66,9 @@ class ProfilerObjectParser(object):
     def _parse_variable(self, var_data, current_execution_id):
         '''Parse a single MAL variable.
 
-        :param var_data: A dictionary representing the JSON description of a MAL variable.
-        :returns: A dictionary representing a variable. See :ref:`data_structures`.
-        '''
+:param var_data: A dictionary representing the JSON description of a MAL variable.
+:returns: A dictionary representing a variable. See :ref:`data_structures`.
+'''
         variable = {
             "mal_execution_id": current_execution_id,
             "type_id": self._type_dict.get(var_data.get("type"), -1),
@@ -90,15 +90,15 @@ class ProfilerObjectParser(object):
     def _parse_event(self, json_object):
         '''Parse a single profiler event
 
-        :param json_object: A dictionary representing a JSON object emmited by the profiler.
-        :returns: a tuple of 5 items:
+:param json_object: A dictionary representing a JSON object emmited by the profiler.
+:returns: a tuple of 5 items:
 
-            - A dictionary containing the event data (see :ref:`data_structures`)
-            - A list of prerequisite event ids
-            - A list of referenced variables (see :ref:`data_structures`)
-            - A list of argument variable ids
-            - A list of return variable ids
-        '''
+    - A dictionary containing the event data (see :ref:`data_structures`)
+    - A list of prerequisite event ids
+    - A list of referenced variables (see :ref:`data_structures`)
+    - A list of argument variable ids
+    - A list of return variable ids
+'''
 
         self._event_id += 1
         current_execution_id = self._get_execution_id(json_object.get("tag"),
@@ -142,15 +142,8 @@ class ProfilerObjectParser(object):
         return (event_data, prereq_list, referenced_vars, variable_lists["arg"], variable_lists["ret"])
 
     def _get_execution_id(self, session, tag):
-        '''Return the execution id for the given session and tag
+        '''Return the (local) execution id for the given session and tag
 
-        Before inserting events in the database execute
-
-        .. code-block:: sql
-
-           SELECT max(execution_id) FROM mal_execution
-
-        and add the result to all the execution ids.
         '''
         key = "{}:{}".format(session, tag)
         execution_id = self._execution_dict.get(key)
@@ -164,9 +157,9 @@ class ProfilerObjectParser(object):
     def _parse_trace_stream(self, json_stream):
         '''Parce a list of json trace objects
 
-        This will create a representation ready to be inserted into the
-        database.
-        '''
+This will create a representation ready to be inserted into the
+database.
+'''
         events = list()
         variables = list()
         prerequisite_events = list()
@@ -361,7 +354,7 @@ class ProfilerObjectParser(object):
     def _parse_heartbeat(self, json_object):
         '''Parses a heartbeat object and adds it to the database.
 
-        '''
+'''
         pass
         # cursor = self._connection.cursor()
         # self._heartbeat_id += 1

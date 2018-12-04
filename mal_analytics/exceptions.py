@@ -11,6 +11,8 @@ class MalParserError(Exception):
 
 
 class IntegrityConstraintViolation(MalParserError):
+    """Gets raised if a integrity constraint (e.g. primary/foreign keys) is violated.
+    """
     pass
 
 
