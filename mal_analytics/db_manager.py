@@ -117,10 +117,20 @@ loading, and adding/dropping constraints.
 :param script_path: A string with the path to the script.
 """
         with open(script_path) as sql_fl:
-            sql_in = sql_fl.read()
+            sql_in = sql_fl.readlines()
 
-        for stmt in sql_in.split(';')[:-1]:
-            self._connection.execute(stmt)
+        stmt = list()
+        for ln in sql_in:
+            cline = ln.strip()
+            if ln.startswith('--') or len(cline) == 0:
+                continue
+
+            stmt.append(cline)
+            if cline.endswith(';'):
+                statement = " ".join(stmt)
+                print(statement)
+                self._connection.execute(statement)
+                stmt = list()
 
     def get_cursor(self):
         """Get a cursor to the current database connection.
