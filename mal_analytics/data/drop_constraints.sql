@@ -9,19 +9,19 @@ ALTER TABLE prerequisite_events
 ALTER TABLE prerequisite_events
     DROP CONSTRAINT fk_pre_consequent_event;
 
-ALTER TABLE return_variable_list
-    DROP CONSTRAINT pk_return_variable_list;
-ALTER TABLE return_variable_list
-    DROP CONSTRAINT fk_rv_event_id;
-ALTER TABLE return_variable_list
-    DROP CONSTRAINT fk_rv_variable_id;
+ALTER TABLE event_variable_list
+    DROP CONSTRAINT pk_event_variable_list;
+ALTER TABLE event_variable_list
+    DROP CONSTRAINT fk_evl_event_id;
+ALTER TABLE event_variable_list
+    DROP CONSTRAINT fk_evl_variable_id;
 
-ALTER TABLE argument_variable_list
-    DROP CONSTRAINT pk_argument_variable_list;
-ALTER TABLE argument_variable_list
-    DROP CONSTRAINT fk_av_event_id;
-ALTER TABLE argument_variable_list
-    DROP CONSTRAINT fk_av_variable_id;
+-- ALTER TABLE argument_variable_list
+--     DROP CONSTRAINT pk_argument_variable_list;
+-- ALTER TABLE argument_variable_list
+--     DROP CONSTRAINT fk_av_event_id;
+-- ALTER TABLE argument_variable_list
+--     DROP CONSTRAINT fk_av_variable_id;
 
 ALTER TABLE mal_variable
     DROP CONSTRAINT pk_mal_variable;

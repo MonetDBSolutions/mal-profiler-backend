@@ -35,19 +35,19 @@ ALTER TABLE mal_variable ADD
 ALTER TABLE mal_variable ADD
     CONSTRAINT unique_mv_var_name UNIQUE (mal_execution_id, name);
 
-ALTER TABLE return_variable_list ADD
-     CONSTRAINT pk_return_variable_list PRIMARY KEY (return_list_id);
-ALTER TABLE return_variable_list ADD
-    CONSTRAINT fk_rv_event_id FOREIGN KEY (event_id) REFERENCES profiler_event(event_id);
-ALTER TABLE return_variable_list ADD
-    CONSTRAINT fk_rv_variable_id FOREIGN KEY (variable_id) REFERENCES mal_variable(variable_id);
+ALTER TABLE event_variable_list ADD
+     CONSTRAINT pk_event_variable_list PRIMARY KEY (event_id, variable_list_index);
+ALTER TABLE event_variable_list ADD
+    CONSTRAINT fk_evl_event_id FOREIGN KEY (event_id) REFERENCES profiler_event(event_id);
+ALTER TABLE event_variable_list ADD
+    CONSTRAINT fk_evl_variable_id FOREIGN KEY (variable_id) REFERENCES mal_variable(variable_id);
 
-ALTER TABLE argument_variable_list ADD
-     CONSTRAINT pk_argument_variable_list PRIMARY KEY (argument_list_id);
-ALTER TABLE argument_variable_list ADD
-    CONSTRAINT fk_av_event_id FOREIGN KEY (event_id) REFERENCES profiler_event(event_id);
-ALTER TABLE argument_variable_list ADD
-    CONSTRAINT fk_av_variable_id FOREIGN KEY (variable_id) REFERENCES mal_variable(variable_id);
+-- ALTER TABLE argument_variable_list ADD
+--      CONSTRAINT pk_argument_variable_list PRIMARY KEY (argument_list_id);
+-- ALTER TABLE argument_variable_list ADD
+--     CONSTRAINT fk_av_event_id FOREIGN KEY (event_id) REFERENCES profiler_event(event_id);
+-- ALTER TABLE argument_variable_list ADD
+--     CONSTRAINT fk_av_variable_id FOREIGN KEY (variable_id) REFERENCES mal_variable(variable_id);
 
 ALTER TABLE heartbeat ADD
     CONSTRAINT pk_heartbeat PRIMARY KEY (heartbeat_id);
