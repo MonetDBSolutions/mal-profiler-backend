@@ -4,14 +4,6 @@ mal\_analytics package
 Submodules
 ----------
 
-mal\_analytics.create\_db module
---------------------------------
-
-.. automodule:: mal_analytics.create_db
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 mal\_analytics.exceptions module
 --------------------------------
 
