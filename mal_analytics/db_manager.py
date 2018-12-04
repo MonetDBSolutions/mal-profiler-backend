@@ -170,24 +170,16 @@ function returns a tuple containing these limits.
 
 """
 
-        execution_id_query = "SELECT MAX(execution_id) FROM mal_execution"
-        event_id_query = "SELECT MAX(event_id) FROM profiler_event"
-        variable_id_query = "SELECT MAX(variable_id) FROM mal_variable"
-        heartbeat_id_query = "SELECT MAX(heartbeat_id) FROM heartbeat"
+        limit_queries = [
+            "SELECT MAX(execution_id) FROM mal_execution",
+            "SELECT MAX(event_id) FROM profiler_event",
+            "SELECT MAX(variable_id) FROM mal_variable",
+            "SELECT MAX(heartbeat_id) FROM heartbeat"
+        ]
+        results = [self.execute_query(q) for q in limit_queries]
 
-        results = self.execute_query(execution_id_query)
-        execution_id = results[0][0] if results[0][0] is not None else 0
-
-        results = self.execute_query(event_id_query)
-        event_id = results[0][0] if results[0][0] is not None else 0
-
-        results = self.execute_query(variable_id_query)
-        variable_id = results[0][0] if results[0][0] is not None else 0
-
-        results = self.execute_query(heartbeat_id_query)
-        heartbeat_id = results[0][0] if results[0][0] is not None else 0
-
-        return (execution_id, event_id, variable_id, heartbeat_id)
+        # if x[0][0] is None return 0
+        return [(x[0][0] or 0) for x in results]
 
     def create_parser(self):
         """Create and initialize a new :class:`mal_analytics.profiler_parser.ProfilerObjectParser` object.
