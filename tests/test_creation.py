@@ -22,8 +22,8 @@ class TestCreation(object):
             'prerequisite_events',
             'mal_type',
             'mal_variable',
-            'return_variable_list',
-            'argument_variable_list',
+            'event_variable_list',
+            # 'argument_variable_list',
             'heartbeat',
             'cpuload'
         ]

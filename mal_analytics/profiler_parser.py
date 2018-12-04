@@ -69,7 +69,9 @@ into a MonetDBLite-Python trace database.
 :param var_data: A dictionary representing the JSON description of a MAL variable.
 :returns: A dictionary representing a variable. See :ref:`data_structures`.
 '''
+        self._variable_id += 1
         variable = {
+            "variable_id": self._variable_id,
             "mal_execution_id": current_execution_id,
             "type_id": self._type_dict.get(var_data.get("type"), -1),
             "name": var_data.get('name'),
@@ -82,7 +84,8 @@ into a MonetDBLite-Python trace database.
             "hghbase": var_data.get('hghbase'),
             "eol": var_data.get('eol') == 1,
             "mal_value": var_data.get('value'),
-            "parent": var_data.get('parent')
+            "parent": var_data.get('parent'),
+            "list_index": var_data.get('index')
         }
 
         return variable
@@ -124,11 +127,9 @@ into a MonetDBLite-Python trace database.
 
         prereq_list = json_object.get("prereq")
         referenced_vars = dict()
-        variable_lists = dict()
-        variable_lists["arg"] = list()
-        variable_lists["ret"] = list()
+        event_variables = list()
 
-        for var_kind in ["arg", "ret"]:
+        for var_kind in ["ret", "arg"]:
             for item in json_object.get(var_kind, []):
                 parsed_var = self._parse_variable(item, current_execution_id)
                 var_name = parsed_var.get('name')
@@ -137,9 +138,14 @@ into a MonetDBLite-Python trace database.
                 if var_name in referenced_vars:
                     raise exceptions.MalParserError('Variable named {} already in referenced_vars'.format(var_name))
                 referenced_vars[var_name] = parsed_var
-                variable_lists[var_kind].append(parsed_var.get('name'))
+                var = {
+                    "event_id": self._event_id,
+                    "variable_list_index": parsed_var.get('index'),
+                    "variable_id": parsed_var.get('variable_id')
+                }
+                event_variables.append(var)
 
-        return (event_data, prereq_list, referenced_vars, variable_lists["arg"], variable_lists["ret"])
+        return (event_data, prereq_list, referenced_vars, event_variables)
 
     def _get_execution_id(self, session, tag):
         '''Return the (local) execution id for the given session and tag
@@ -191,6 +197,8 @@ database.
 
             for pev in prereq_list:
                 prerequisite_events.append((pev, event_data['event_id']))
+
+
 
     def _parse_trace(self, json_object):
         pass

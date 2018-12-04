@@ -19,6 +19,7 @@ class TestParser(object):
         execution_id = 42
         variable = parser_object._parse_variable(json_input, execution_id)
         variable_truth = {
+            "variable_id": 1,
             "name": "C_1502",
             "mal_execution_id": execution_id,
             "alias": "sys.lineitem.l_shipdate",
@@ -31,7 +32,8 @@ class TestParser(object):
             "eol": False,
             "bid": 0,
             "count": 0,
-            "parent": None
+            "parent": None,
+            "list_index": 0
         }
 
         assert len(variable) == len(variable_truth)
@@ -43,7 +45,7 @@ class TestParser(object):
         json_input_str = """{"version":"11.32.0 (hg id: 903396fca5 (git))","source":"trace","clk":27720582,"ctime":1543501117800118,"thread":44,"function":"user.s0_1","pc":2027,"tag":9,"module":"algebra","instruction":"thetaselect","session":"cd31712f-032b-486e-86c4-f6f445d1394d","state":"start","usec":0,"rss":101,"size":0,"stmt":"C_2622=nil:bat[:oid] := algebra.thetaselect(X_2373=<tmp_544>[100020]:bat[:date], C_394=<tmp_272>[100020]:bat[:oid], \\\"1992-12-11\\\":date, \\\"<=\\\":str);","short":"C_2622[0]:= thetaselect( X_2373[100020], C_394[100020], 1992-12-11, \\\"<=\\\" )","prereq":[2025,2026],"ret":[{"index":0,"name":"C_2622","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":0,"count":0,"size":0,"eol":0}],"arg":[{"index":1,"name":"X_2373","alias":"sys.lineitem.l_shipdate","type":"bat[:date]","view":"true","parent":798,"seqbase":5601120,"hghbase":5701140,"kind":"persistent","bid":356,"count":100020,"size":400080,"eol":1},{"index":2,"name":"C_394","type":"bat[:oid]","kind":"transient","bid":186,"count":100020,"size":0,"eol":1},{"index":3,"name":"X_262","type":"date","value":"1992-12-11","eol":0},{"index":4,"name":"X_69","type":"str","value":"\\\"<=\\\"","eol":0}]}"""
         json_input = json.loads(json_input_str)
 
-        event_data, prereq_list, variables, arg_vars, ret_vars = parser_object._parse_event(json_input)
+        event_data, prereq_list, variables, event_variables = parser_object._parse_event(json_input)
         event_data_truth = {
             "event_id": 1,
             "mal_execution_id": 1,
@@ -65,6 +67,7 @@ class TestParser(object):
         prereq_list_truth = [2025, 2026]
         variables_truth = {
             "C_2622": {
+                "variable_id": 1,
                 "name": "C_2622",
                 "alias": "sys.lineitem.l_shipdate",
                 "type_id": 20,
@@ -74,6 +77,7 @@ class TestParser(object):
                 "eol": 0
             },
             "X_2373": {
+                "variable_id": 2,
                 "name": "X_2373",
                 "alias": "sys.lineitem.l_shipdate",
                 "type_id": 24,
@@ -87,6 +91,7 @@ class TestParser(object):
                 "eol": 1
             },
             "C_394": {
+                "variable_id": 3,
                 "name": "C_394",
                 "type_id": 20,
                 "is_persistent": False,
@@ -96,18 +101,47 @@ class TestParser(object):
                 "eol": 1
             },
             "X_262": {
+                "variable_id": 4,
                 "name": "X_262",
                 "type_id": 11,
                 "mal_value": "1992-12-11",
                 "eol": 0
             },
             "X_69": {
+                "variable_id": 5,
                 "name": "X_69",
                 "type_id": 10,
                 "mal_value": "\"<=\"",
                 "eol": 0
             }
         }
+        event_variables_truth = [
+            {
+                "event_id": 1,
+                "variable_list_index": 0,
+                "variable_id": 1
+            },
+            {
+                "event_id": 1,
+                "variable_list_index": 1,
+                "variable_id": 2
+            },
+            {
+                "event_id": 1,
+                "variable_list_index": 2,
+                "variable_id": 3
+            },
+            {
+                "event_id": 1,
+                "variable_list_index": 3,
+                "variable_id": 4
+            },
+            {
+                "event_id": 1,
+                "variable_list_index": 4,
+                "variable_id": 5
+            },
+        ]
         arg_vars_truth = ["X_2373", "C_394", "X_262", "X_69"]
         ret_vars_truth = ["C_2622"]
 
@@ -119,19 +153,11 @@ class TestParser(object):
         for v in prereq_list_truth:
             assert v in prereq_list, "Prerequisite event {} missing from list".format(v)
 
-        assert len(variables_truth) == len(variables)
+        assert len(event_variables_truth) == len(event_variables)
         for var, var_dict in variables_truth.items():
             assert var in variables, "Variable {} missing from variable list".format(var)
             for k, v in var_dict.items():
                 assert variables.get(var).get(k) == v, "{}.get('{}') != {}".format(var, k, v)
-
-        assert len(arg_vars_truth) == len(arg_vars)
-        for v in arg_vars_truth:
-            assert v in arg_vars, "Variable {} missing from "
-
-        assert len(ret_vars_truth) == len(ret_vars)
-        for v in ret_vars_truth:
-            assert v in ret_vars
 
     def test_parse_unnamed_variable_raises(self, parser_object):
         json_input_str = """{"source":"trace","clk":1073703375,"ctime":1532603484932132,"thread":15,"function":"user.main","pc":46,"tag":214,"session":"dc2c13b3-8bde-4706-8ee5-60703a176325","state":"start","usec":0,"rss":1969,"size":0,"nvcsw":1,"stmt":"C_1502=nil:bat[:oid] := algebra.thetaselect(X_1338=<tmp_3010>[18751184]:bat[:date], C_283=<tmp_2056>[18751184]:bat[:oid], \\\"1998-08-22\\\":date, \\\"<=\\\":str);","short":"C_1502[0]:= thetaselect( X_1338[18751184], C_283[18751184], 1998-08-22, \\\"<=\\\" )","prereq":[44,45],"ret":[{"index":"0","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":"0","count":"0","size":0,"eol":0}],"arg":[{"index":"1","name":"X_1338","alias":"sys.lineitem.l_shipdate","type":"bat[:date]","view":"true","parent":"787","seqbase":"18751184","hghbase":"37502368","kind":"persistent","bid":"1544","count":"18751184","size":75004736,"eol":1},{"index":"2","name":"C_283","type":"bat[:oid]","kind":"transient","bid":"1070","count":"18751184","size":0,"eol":1},{"index":"3","name":"X_265","type":"date","value":"1998-08-22","eol":0},{"index":"4","name":"X_72","type":"str","value":"\\\"<=\\\"","eol":0}]}"""

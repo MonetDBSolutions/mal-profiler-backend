@@ -72,8 +72,7 @@ MonetDBLite operates.
             'prerequisite_events',
             'mal_type',
             'mal_variable',
-            'return_variable_list',
-            'argument_variable_list',
+            'event_variable_list',
             'heartbeat',
             'cpuload'
         ]
@@ -82,7 +81,8 @@ MonetDBLite operates.
             rslt = cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)
             # This should never happen
             if rslt != 1:
-                raise InitializationError("Did not find table %s in database %s", tbl, self.get_dbpath)
+                LOGGER.error("Did not find table %s in database %s", tbl, self.get_dbpath)
+                raise InitializationError("Database {} did not initialize properly (table {} not found)".format(self.get_dbpath, tbl))
 
     def get_dbpath(self):
         """Get the location on disk of the database.
