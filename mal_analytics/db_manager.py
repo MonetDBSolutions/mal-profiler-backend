@@ -6,6 +6,8 @@
 
 import logging
 import os
+import tempfile
+
 import monetdblite
 
 from mal_analytics.exceptions import InitializationError
@@ -186,4 +188,40 @@ function returns a tuple containing these limits.
 
 :returns: A new parser for MonetDB JSON Profiler objects
         """
+
         return ProfilerObjectParser(**self.get_limits())
+
+    def _prepare_csv(self, data):
+        """Create a CSV file from the given data.
+
+The data should be a homogeneous list of dictionaries, representing
+the tuples to be inserted into the database. This method will package
+it in CSV form and writes it to a temporary file.
+
+:params data: A homogeneous list of dictionaries.
+:returns: The path to the temporary file.
+        """
+
+        fname = tempfile.mktemp()
+        keys = data[0].keys()
+        csv_lines = ""
+        for element in data:
+            # Note: For Python < 3.7 order of elements.values() is not
+            # guaranteed. More specifically the the order of elements
+            # in a dictionary is an implementation detail, so
+            # different implementations can conceivably have different
+            # element orders.
+            #
+            # For Python >= 3.7 the order of elements is guaranteed to
+            # be the insertion order.
+            #
+            # TODO: Consider using an OrderedDict
+            #
+            # See this explanation: https://stackoverflow.com/a/15479974
+            csv_lines += "|".join([str(c) for c in element.values()])
+            csv_lines += "\n"
+
+        with open(fname, 'w') as fl:
+            fl.write(csv_lines)
+
+        return fname
