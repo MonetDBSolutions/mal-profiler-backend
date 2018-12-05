@@ -8,6 +8,7 @@ create table mal_execution (
        execution_id bigint,
        server_session char(36) not null,
        tag int not null,
+       version char(120),
 
        constraint pk_mal_execution primary key (execution_id),
        constraint unique_me_mal_execution unique(server_session, tag)
@@ -70,6 +71,7 @@ create table mal_variable (
        hghbase int,
        eol bool,
        mal_value text,
+       parent int,
 
        constraint pk_mal_variable primary key (variable_id),
        constraint fk_mv_mal_execution_id foreign key (mal_execution_id) references mal_execution(execution_id),

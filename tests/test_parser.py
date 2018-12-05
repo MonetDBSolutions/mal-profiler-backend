@@ -24,14 +24,14 @@ class TestParser(object):
             "mal_execution_id": execution_id,
             "alias": "sys.lineitem.l_shipdate",
             "is_persistent": False,
-            "size": 0,
+            "var_size": 0,
             "seqbase": None,
             "hghbase": None,
             "mal_value": None,
             "type_id": 20,
             "eol": False,
             "bid": 0,
-            "count": 0,
+            "var_count": 0,
             "parent": None,
             "list_index": 0
         }
@@ -72,8 +72,8 @@ class TestParser(object):
                 "alias": "sys.lineitem.l_shipdate",
                 "type_id": 20,
                 "bid": 0,
-                "count": 0,
-                "size": 0,
+                "var_count": 0,
+                "var_size": 0,
                 "eol": 0
             },
             "X_2373": {
@@ -86,8 +86,8 @@ class TestParser(object):
                 "hghbase": 5701140,
                 "is_persistent": True,
                 "bid": 356,
-                "count": 100020,
-                "size": 400080,
+                "var_count": 100020,
+                "var_size": 400080,
                 "eol": 1
             },
             "C_394": {
@@ -96,8 +96,8 @@ class TestParser(object):
                 "type_id": 20,
                 "is_persistent": False,
                 "bid": 186,
-                "count": 100020,
-                "size": 0,
+                "var_count": 100020,
+                "var_size": 0,
                 "eol": 1
             },
             "X_262": {

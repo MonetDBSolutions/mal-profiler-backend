@@ -33,7 +33,9 @@ into a MonetDBLite-Python trace database.
         self._heartbeat_id = heartbeat_id
         self._execution_dict = dict()
         self._states = {'start': 0, 'done': 1, 'pause': 2}
-        # self._connection = connection
+
+        self._initialize_tables()
+
         # All possible MAL variable types.
         # NOTE: This might need to be updated if new types are added.
         self._type_dict = {
@@ -63,6 +65,78 @@ into a MonetDBLite-Python trace database.
             'bat[:date]': 24,
         }
 
+    def _initialize_tables(self):
+        """Initialize dictionaries that map directly to the db tables.
+"""
+        self._executions = {
+            "execution_id": list(),
+            "server_session": list(),
+            "tag": list(),
+            "version": list(),
+        }
+
+        self._events = {
+            "event_id": list(),
+            "mal_execution_id": list(),
+            "pc": list(),
+            "execution_state": list(),
+            "clk": list(),
+            "ctime": list(),
+            "thread": list(),
+            "mal_function": list(),
+            "usec": list(),
+            "rss": list(),
+            "type_size": list(),
+            "long_statement": list(),
+            "short_statement": list(),
+            "instruction": list(),
+            "mal_module": list(),
+        }
+
+        self._prerequisite_events = {
+            "prerequisite_relation_id": list(),
+            "prerequisite_event": list(),
+            "consequent_event": list(),
+        }
+
+        self._variables = {
+            "variable_id": list(),
+            "name": list(),
+            "mal_execution_id": list(),
+            "alias": list(),
+            "type_id": list(),
+            "is_persistent": list(),
+            "bid": list(),
+            "var_count": list(),
+            "var_size": list(),
+            "seqbase": list(),
+            "hghbase": list(),
+            "eol": list(),
+            "mal_value": list(),
+            "parent": list(),
+        }
+
+        self._event_variables = {
+            "event_id": list(),
+            "variable_list_index": list(),
+            "variable_id": list()
+        }
+
+        self._heartbeats = {
+            "heartbeat_id": list(),
+            "server_session": list(),
+            "clk": list(),
+            "ctime": list(),
+            "nvcsw": list(),
+        }
+
+        self._cpuloads = {
+            "cpuload_id": list(),
+            "heartbeat_id": list(),
+            "val": list(),
+        }
+
+
     def _parse_variable(self, var_data, current_execution_id):
         '''Parse a single MAL variable.
 
@@ -78,8 +152,8 @@ into a MonetDBLite-Python trace database.
             "alias": var_data.get('alias'),
             "is_persistent": var_data.get('kind') == 'persistent',
             "bid": var_data.get('bid'),
-            "count": var_data.get('count'),
-            "size": var_data.get('size', 0),
+            "var_count": var_data.get('count'),
+            "var_size": var_data.get('size', 0),
             "seqbase": var_data.get('seqbase'),
             "hghbase": var_data.get('hghbase'),
             "eol": var_data.get('eol') == 1,
@@ -87,6 +161,13 @@ into a MonetDBLite-Python trace database.
             "parent": var_data.get('parent'),
             "list_index": var_data.get('index')
         }
+
+        # Add new variable to the table
+        ignored_keys = ['list_index']
+        for k, v in variable.items():
+            if k in ignored_keys:
+                continue
+            self._variables[k].append(v)
 
         return variable
 
@@ -140,14 +221,14 @@ into a MonetDBLite-Python trace database.
                 referenced_vars[var_name] = parsed_var
                 var = {
                     "event_id": self._event_id,
-                    "variable_list_index": parsed_var.get('index'),
+                    "variable_list_index": parsed_var.get('list_index'),
                     "variable_id": parsed_var.get('variable_id')
                 }
                 event_variables.append(var)
 
         return (event_data, prereq_list, referenced_vars, event_variables)
 
-    def _get_execution_id(self, session, tag):
+    def _get_execution_id(self, session, tag, version=None):
         '''Return the (local) execution id for the given session and tag
 
         '''
@@ -157,6 +238,12 @@ into a MonetDBLite-Python trace database.
             self._execution_id += 1
             execution_id = self._execution_id
             self._execution_dict[key] = execution_id
+
+            # Add the new execution to the table.
+            self._executions['execution_id'].append(execution_id)
+            self._executions['server_session'].append(session)
+            self._executions['tag'].append(tag)
+            self._executions['version'].append(version)
 
         return execution_id
 
