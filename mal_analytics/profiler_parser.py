@@ -248,7 +248,7 @@ into a MonetDBLite-Python trace database.
         return execution_id
 
     def _parse_trace_stream(self, json_stream):
-        '''Parce a list of json trace objects
+        '''Parse a list of json trace objects
 
 This will create a representation ready to be inserted into the
 database.
@@ -447,7 +447,7 @@ database.
         # # cursor.close()
 
     def _parse_heartbeat(self, json_object):
-        '''Parses a heartbeat object and adds it to the database.
+        '''Parse a heartbeat object and adds it to the database.
 
 '''
         pass
@@ -470,6 +470,105 @@ database.
         # for c in json_object['cpuload']:
         #     cursor.execute(cpl_ins_qtext, {'heartbeat_id': self._heartbeat_id,
         #                                    'val': c})
+
+    def get_data(self):
+        """Return the data that has been parsed so far.
+
+The data is ready to be inserted into MonetDBLite.
+
+:returns: A tuple containing the following dictionaries:
+
+        - A dictionary for executions with the following keys:
+
+          + execution_id
+          + server_session
+          + tag
+          + version
+
+        - A dictionary for events with the following keys:
+
+          + event_id
+          + mal_execution_id
+          + pc
+          + execution_state
+          + clk
+          + ctime
+          + thread
+          + mal_function
+          + usec
+          + rss
+          + type_size
+          + long_statement
+          + short_statement
+          + instruction
+          + mal_module
+
+        - A dictionary for prerequisite event with the following keys:
+
+          + prerequisite_relation_id
+          + prerequisite_event
+          + consequent_event
+
+        - A dictionary for variables with the following keys:
+
+          + variable_id
+          + name
+          + mal_execution_id
+          + alias
+          + type_id
+          + is_persistent
+          + bid
+          + var_count
+          + var_size
+          + seqbase
+          + hghbase
+          + eol
+          + mal_value
+          + parent
+
+        - A dictionary for connecting events to variables with the following keys:
+
+          + event_id
+          + variable_list_index
+          + variable_id
+
+        - A dictionary for heartbeats with the following keys:
+
+          + heartbeat_id
+          + server_session
+          + clk
+          + ctime
+          + nvcsw
+
+        - A dictionary for cpuloads with the following keys:
+
+          + cpuload_id
+          + heartbeat_id
+          + val
+"""
+        return (
+            self._executions,
+            self._events,
+            self._prerequisite_events,
+            self._variables,
+            self._event_variables,
+            self._heartbeats,
+            self._cpuloads
+        )
+
+    def clear_internal_state(self):
+        """Clear the internal dictionaries.
+"""
+        del self._executions
+        del self._events
+        del self._prerequisite_events
+        del self._variables
+        del self._event_variables
+        del self._heartbeats
+        del self._cpuloads
+
+        self._initialize_tables()
+
 
     def parse_object(self, json_string):
         try:
