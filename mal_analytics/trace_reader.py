@@ -71,9 +71,9 @@ def parse_trace(filename, database_path):
 
     pob.parse_trace_stream(json_stream)
     for table, data in pob.get_data().items():
-        print("Inserting data in", table)
-        for k, v in data.items():
-            print("  ", k, " => ", len(v))
+        # print("Inserting data in", table)
+        #for k, v in data.items():
+            # print("  ", k, " => ", len(v))
         dbm.insert_data(table, data)
 
     add_constraints_script = os.path.join(cpath, 'data', 'add_constraints.sql')

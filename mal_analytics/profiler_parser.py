@@ -267,6 +267,7 @@ database.
         # This is a list that we use for deduplication of variables.
         var_name_list = list()
         execution = -1
+        cnt = 0
         for json_event in json_stream:
             src = json_event.get("source")
             if src == "trace":
@@ -315,7 +316,8 @@ database.
                 for pev in prereq_list:
                     prerequisite_events.append((pev, event_data['event_id']))
 
-
+                cnt += 1
+                LOGGER.debug(cnt)
 
     def _parse_trace(self, json_object):
         pass
