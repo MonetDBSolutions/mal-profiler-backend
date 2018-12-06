@@ -163,13 +163,6 @@ into a MonetDBLite-Python trace database.
             "list_index": var_data.get('index')
         }
 
-        # Add new variable to the table
-        ignored_keys = ['list_index']
-        for k, v in variable.items():
-            if k in ignored_keys:
-                continue
-            self._variables[k].append(v)
-
         return variable
 
     def _parse_event(self, json_object):
@@ -261,7 +254,7 @@ into a MonetDBLite-Python trace database.
 
         return execution_id
 
-    def _parse_trace_stream(self, json_stream):
+    def parse_trace_stream(self, json_stream):
         '''Parse a list of json trace objects
 
 This will create a representation ready to be inserted into the
@@ -275,29 +268,52 @@ database.
         var_name_list = list()
         execution = -1
         for json_event in json_stream:
-            event_data, prereq_list, referenced_vars, args, lists = self._parse_event(json_event)
-            prev_execution = execution
-            execution = self._get_execution_id(event_data.get('session'), event_data.get('tag'))
-            event_data['execution_id'] = execution
-            events.append(event_data)
+            src = json_event.get("source")
+            if src == "trace":
+                event_data, prereq_list, referenced_vars, event_lists = self._parse_event(json_event)
+                prev_execution = execution
+                if json_event.get('session') is None or json_event.get('tag') is None:
+                    # LOGGER.debug(json_event)
+                    LOGGER.debug(json_event)
+                    raise exceptions.MalParserError('Missing session or tag')
+                execution = self._get_execution_id(json_event.get('session'), json_event.get('tag'))
+                event_data['mal_execution_id'] = execution
+                # events.append(event_data)
 
-            # Variables and variable names are scoped by executions
-            # (session + tag combinations). Between different
-            # executions variables with the same name are allowed to
-            # exist.
-            if execution != prev_execution:
-                var_name_list = list()
+                # Add new event to the table
+                ignored_keys = ['version']
+                for k, v in event_data.items():
+                    if k in ignored_keys:
+                        continue
+                    self._events[k].append(v)
 
-            for var_name, var in referenced_vars.items():
-                # Ignore variables that we have already seen
-                if var_name in var_name_list:
-                    continue
 
-                var['mal_execution_id'] = execution
-                variables.append(var)
+                # Variables and variable names are scoped by executions
+                # (session + tag combinations). Between different
+                # executions variables with the same name are allowed to
+                # exist.
+                if execution != prev_execution:
+                    var_name_list = list()
 
-            for pev in prereq_list:
-                prerequisite_events.append((pev, event_data['event_id']))
+                for var_name, var in referenced_vars.items():
+                    # Ignore variables that we have already seen
+                    if var_name in var_name_list:
+                        continue
+
+                    var_name_list.append(var_name)
+
+                    var['mal_execution_id'] = execution
+                    # Add new variable to the table
+                    ignored_keys = ['list_index']
+                    for k, v in var.items():
+                        if k in ignored_keys:
+                            continue
+                        self._variables[k].append(v)
+
+                    # variables.append(var)
+
+                for pev in prereq_list:
+                    prerequisite_events.append((pev, event_data['event_id']))
 
 
 
@@ -596,7 +612,7 @@ the following dictionaries:
             return
 
         dispatcher = {
-            'trace': self._parse_trace,
+            'trace': self._parse_event,
             'heartbeat': self._parse_heartbeat
         }
 
