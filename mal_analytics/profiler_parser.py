@@ -127,6 +127,7 @@ into a MonetDBLite-Python trace database.
             "server_session": list(),
             "clk": list(),
             "ctime": list(),
+            "rss": list(),
             "nvcsw": list(),
         }
 
@@ -185,8 +186,9 @@ into a MonetDBLite-Python trace database.
 '''
 
         self._event_id += 1
-        current_execution_id = self._get_execution_id(json_object.get("tag"),
-                                                      json_object.get("session"))
+        current_execution_id = self._get_execution_id(json_object.get("session"),
+                                                      json_object.get("tag"),
+                                                      json_object.get("version"))
         event_data = {
             "event_id": self._event_id,
             "mal_execution_id": current_execution_id,
@@ -198,7 +200,7 @@ into a MonetDBLite-Python trace database.
             "mal_function": json_object.get("function"),
             "usec": json_object.get("usec"),
             "rss": json_object.get("rss"),
-            "size": json_object.get("size"),
+            "type_size": json_object.get("size"),
             "long_statement": json_object.get("stmt"),
             "short_statement": json_object.get("short"),
             "instruction": json_object.get("instruction"),
@@ -217,7 +219,13 @@ into a MonetDBLite-Python trace database.
                 if var_name is None:
                     raise exceptions.MalParserError('Unnamed variable')
                 if var_name in referenced_vars:
-                    raise exceptions.MalParserError('Variable named {} already in referenced_vars'.format(var_name))
+                    # Ignore variables we have encountered
+                    # already. This will happen in the following case
+                    # for example:
+                    # X_117[2]:= subsum( X_5013[120], X_105[120], C_106[2], true, true )
+                    # because the literal `true` is used twice.
+                    # LOGGER.warning('Variable named %s already in referenced_vars', var_name)
+                    continue
                 referenced_vars[var_name] = parsed_var
                 var = {
                     "event_id": self._event_id,
@@ -232,8 +240,14 @@ into a MonetDBLite-Python trace database.
         '''Return the (local) execution id for the given session and tag
 
         '''
+
+        # LOGGER.debug(session)
+        # LOGGER.debug(tag)
+        # LOGGER.debug(version)
         key = "{}:{}".format(session, tag)
         execution_id = self._execution_dict.get(key)
+        # LOGGER.debug("Execution ID = %s", execution_id)
+
         if execution_id is None:
             self._execution_id += 1
             execution_id = self._execution_id
@@ -476,7 +490,8 @@ database.
 
 The data is ready to be inserted into MonetDBLite.
 
-:returns: A tuple containing the following dictionaries:
+:returns: A dictionary, with keys the names of the tables and values
+the following dictionaries:
 
         - A dictionary for executions with the following keys:
 
@@ -545,16 +560,17 @@ The data is ready to be inserted into MonetDBLite.
           + cpuload_id
           + heartbeat_id
           + val
-"""
-        return (
-            self._executions,
-            self._events,
-            self._prerequisite_events,
-            self._variables,
-            self._event_variables,
-            self._heartbeats,
-            self._cpuloads
-        )
+
+        """
+        return {
+            "mal_execution": self._executions,
+            "profiler_event": self._events,
+            "prerequisite_events": self._prerequisite_events,
+            "mal_variable": self._variables,
+            "event_variable_list": self._event_variables,
+            "heartbeat": self._heartbeats,
+            "cpuload": self._cpuloads
+        }
 
     def clear_internal_state(self):
         """Clear the internal dictionaries.
@@ -600,7 +616,7 @@ The data is ready to be inserted into MonetDBLite.
         try:
             parse_func(json_object)
         except exceptions.MalParserError as e:
-            LOGGER.warning("Parsing JSON Object\n  %s\nfailed:\n  %s", json_object, e.msg)
+            LOGGER.warning("Parsing JSON Object\n  %s\nfailed:\n  %s", json_object, str(e))
             return
 
     # def get_connection(self):
