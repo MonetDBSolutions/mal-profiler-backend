@@ -11,6 +11,7 @@ import tempfile
 import monetdblite
 
 from mal_analytics.exceptions import InitializationError
+from mal_analytics.exceptions import DatabaseManagerError
 from mal_analytics.profiler_parser import ProfilerObjectParser
 
 LOGGER = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ stackoverflow post.
 class DatabaseManager(object, metaclass=Singleton):
     """A connection manager for the database.
 
-This class is a *signleton*. Singletons are to be avoided in
+This class is a *singleton*. Singletons are to be avoided in
 general, but unfortunatelly any component communicating directly
 with MonetDBLite should be a singleton, because of the way
 MonetDBLite operates.
@@ -130,7 +131,7 @@ loading, and adding/dropping constraints.
             stmt.append(cline)
             if cline.endswith(';'):
                 statement = " ".join(stmt)
-                print(statement)
+                # print(statement)
                 self._connection.execute(statement)
                 stmt = list()
 
@@ -225,3 +226,16 @@ it in CSV form and writes it to a temporary file.
             fl.write(csv_lines)
 
         return fname
+
+    def insert_data(self, table, data):
+        if not self.is_connected():
+            raise DatabaseManagerError("Manager is not connected")
+
+        cursor = self._connection.cursor()
+        try:
+            cursor.insert(table, data)
+        except monetdblite.Error as err:
+            LOGGER.warning("Did not insert data to %s\nError: %s", table, str(err))
+            LOGGER.warning(data)
+
+        cursor.close()
