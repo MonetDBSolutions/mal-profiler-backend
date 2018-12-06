@@ -189,7 +189,7 @@ function returns a tuple containing these limits.
 :returns: A new parser for MonetDB JSON Profiler objects
         """
 
-        return ProfilerObjectParser(**self.get_limits())
+        return ProfilerObjectParser(*self.get_limits())
 
     def _prepare_csv(self, data):
         """Create a CSV file from the given data.
