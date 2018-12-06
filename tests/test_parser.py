@@ -58,7 +58,7 @@ class TestParser(object):
             "mal_function": "user.s0_1",
             "usec": 0,
             "rss": 101,
-            "size": 0,
+            "type_size": 0,
             "long_statement": "C_2622=nil:bat[:oid] := algebra.thetaselect(X_2373=<tmp_544>[100020]:bat[:date], C_394=<tmp_272>[100020]:bat[:oid], \"1992-12-11\":date, \"<=\":str);",
             "short_statement": "C_2622[0]:= thetaselect( X_2373[100020], C_394[100020], 1992-12-11, \"<=\" )",
             "instruction": "thetaselect",
