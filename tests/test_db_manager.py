@@ -26,8 +26,9 @@ class TestDatabaseManager(object):
     def test_limits_empty_db(self, manager_object):
         # result = manager_object.execute_query("SELECT * FROM mal_execution")
         # print(result)
-        (exid, evid, varid, hbid) = manager_object.get_limits()
+        (exid, evid, varid, hbid, erid) = manager_object.get_limits()
         assert exid == 0
         assert evid == 0
         assert varid == 0
         assert hbid == 0
+        assert erid == 0

@@ -177,7 +177,8 @@ function returns a tuple containing these limits.
             "SELECT MAX(execution_id) FROM mal_execution",
             "SELECT MAX(event_id) FROM profiler_event",
             "SELECT MAX(variable_id) FROM mal_variable",
-            "SELECT MAX(heartbeat_id) FROM heartbeat"
+            "SELECT MAX(heartbeat_id) FROM heartbeat",
+            "SELECT MAX(prerequisite_relation_id) FROM prerequisite_events"
         ]
         results = [self.execute_query(q) for q in limit_queries]
 

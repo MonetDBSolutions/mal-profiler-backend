@@ -23,14 +23,17 @@ into a MonetDBLite-Python trace database.
 :param event_id: The maximum event id in the database
 :param variable_id: The maximum variable id in the database
 :param heartbeat_id: The maximum heartbeat id in the database
+:param prereq_id: The maximum prerequisite relation id in the database
 '''
 
-    def __init__(self, execution_id=0, event_id=0, variable_id=0, heartbeat_id=0):
+    def __init__(self, execution_id=0, event_id=0, variable_id=0, heartbeat_id=0, prereq_id=0):
         logging.basicConfig(level=logging.DEBUG)
         self._execution_id = execution_id
         self._event_id = event_id
         self._variable_id = variable_id
         self._heartbeat_id = heartbeat_id
+        self._prerequisite_relation_id = prereq_id
+
         self._execution_dict = dict()
         self._states = {'start': 0, 'done': 1, 'pause': 2}
 
@@ -297,6 +300,11 @@ database.
                     var_name_list = list()
 
                 for var_name, var in referenced_vars.items():
+                    self._event_variables['event_id'].append(event_data['event_id'])
+                    self._event_variables['variable_list_index'].append(var.get('list_index'))
+                    # NOTE: this violates the foreign key. Why?
+                    self._event_variables['variable_id'].append(var['variable_id'])
+
                     # Ignore variables that we have already seen
                     if var_name in var_name_list:
                         continue
@@ -311,10 +319,14 @@ database.
                             continue
                         self._variables[k].append(v)
 
-                    # variables.append(var)
 
                 for pev in prereq_list:
-                    prerequisite_events.append((pev, event_data['event_id']))
+                    self._prerequisite_relation_id += 1
+                    self._prerequisite_events['prerequisite_relation_id'].append(self._prerequisite_relation_id)
+                    self._prerequisite_events['prerequisite_event'].append(pev)
+                    self._prerequisite_events['consequent_event'].append(event_data['event_id'])
+
+                    # prerequisite_events.append((pev, event_data['event_id']))
 
                 cnt += 1
         LOGGER.debug("%d JSON objects parsed", cnt)
