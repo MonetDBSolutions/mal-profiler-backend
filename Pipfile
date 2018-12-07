@@ -13,6 +13,8 @@ monetdblite = "*"
 coveralls = "*"
 sphinx = "*"
 python-language-server = {extras = ["all"],version = "*"}
+matplotlib = "*"
+pytest-cov = "*"
 
 [dev-packages]
 
