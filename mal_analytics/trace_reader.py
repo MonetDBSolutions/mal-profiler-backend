@@ -8,10 +8,13 @@ import binascii
 import bz2
 import gzip
 import json
+import logging
 import os
 
 from mal_analytics.profiler_parser import ProfilerObjectParser
 from mal_analytics.db_manager import DatabaseManager
+
+LOGGER = logging.getLogger(__name__)
 
 
 def test_gzip(filename):
@@ -60,7 +63,7 @@ def parse_trace(filename, database_path):
     pob = dbm.create_parser()
 
     with abstract_open(filename) as fl:
-        print(filename)
+        LOGGER.debug("Parsing trace from file %s", filename)
 
         json_stream = list()
         json_string = read_object(fl)

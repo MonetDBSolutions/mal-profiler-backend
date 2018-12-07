@@ -317,7 +317,7 @@ database.
                     prerequisite_events.append((pev, event_data['event_id']))
 
                 cnt += 1
-                LOGGER.debug(cnt)
+        LOGGER.debug("%d JSON objects parsed", cnt)
 
     def _parse_trace(self, json_object):
         pass
