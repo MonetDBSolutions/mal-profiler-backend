@@ -79,5 +79,6 @@ def parse_trace(filename, database_path):
             # print("  ", k, " => ", len(v))
         dbm.insert_data(table, data)
 
+    pob.clear_internal_state()
     add_constraints_script = os.path.join(cpath, 'data', 'add_constraints.sql')
     dbm.execute_sql_script(add_constraints_script)
