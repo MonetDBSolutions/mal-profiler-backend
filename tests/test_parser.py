@@ -180,10 +180,125 @@ class TestParser(object):
         assert id1 >= 1
         assert id2 >= 1
 
-    @pytest.mark.skip()
-    def test_parse_single_trace(self, query_trace):
-        assert False
+    def test_empty_get_data(self, parser_object):
+        result = parser_object.get_data()
 
-    @pytest.mark.skip()
-    def test_parse_multiple_traces(self, query_trace1, query_trace2):
-        assert False
+        data_truth = {
+            "mal_execution": [
+                "execution_id",
+                "server_session",
+                "tag",
+                "version",
+            ],
+            "profiler_event": [
+                "event_id",
+                "mal_execution_id",
+                "pc",
+                "execution_state",
+                "clk",
+                "ctime",
+                "thread",
+                "mal_function",
+                "usec",
+                "rss",
+                "type_size",
+                "long_statement",
+                "short_statement",
+                "instruction",
+                "mal_module"
+            ],
+            "prerequisite_events": [
+                "prerequisite_relation_id",
+                "prerequisite_event",
+                "consequent_event"
+            ],
+            "mal_variable": [
+                "variable_id",
+                "name",
+                "mal_execution_id",
+                "alias",
+                "type_id",
+                "is_persistent",
+                "bid",
+                "var_count",
+                "var_size",
+                "seqbase",
+                "hghbase",
+                "eol",
+                "mal_value",
+                "parent",
+            ],
+            "event_variable_list": [
+                "event_id",
+                "variable_list_index",
+                "variable_id",
+            ],
+            "heartbeat": [
+                "heartbeat_id",
+                "server_session",
+                "clk",
+                "ctime",
+                "rss",
+                "nvcsw",
+            ],
+            "cpuload": [
+                "cpuload_id",
+                "heartbeat_id",
+                "val",
+            ],
+        }
+
+        assert len(data_truth) == len(result)
+        for k, v in data_truth.items():
+            assert k in result.keys()
+            assert len(data_truth[k]) == len(result[k])
+            for vk in v:
+                assert vk in result[k]
+                assert len(result[k][vk]) == 0
+
+    def test_parse_single_trace(self, parser_object, query_trace1):
+        truth = {
+            "mal_execution": 1,
+            "profiler_event": 1456,
+            "prerequisite_events": 2474,
+            "mal_variable": 865,
+            "event_variable_list": 5636,
+            "heartbeat": 0,
+            "cpuload": 0
+        }
+        parser_object.parse_trace_stream(query_trace1)
+
+        result = parser_object.get_data()
+
+        for table in result:
+            for field in result[table]:
+                assert len(result[table][field]) == truth[table]
+
+    def test_parse_multiple_traces(self, parser_object, query_trace1, query_trace2):
+        truth = {
+            "mal_execution": 2,
+            "profiler_event": 3074,
+            "prerequisite_events": 6598,
+            "mal_variable": 1886,
+            "event_variable_list": 13418,
+            "heartbeat": 0,
+            "cpuload": 0
+        }
+
+        parser_object.parse_trace_stream(query_trace1)
+        parser_object.parse_trace_stream(query_trace2)
+
+        result = parser_object.get_data()
+
+        for table in result:
+            for field in result[table]:
+                assert len(result[table][field]) == truth[table]
+
+    def test_clear_data(self, parser_object, query_trace1):
+        parser_object.parse_trace_stream(query_trace1)
+        parser_object.clear_internal_state()
+        result = parser_object.get_data()
+
+        for table in result:
+            for field in result[table]:
+                assert len(result[table][field]) == 0
