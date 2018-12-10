@@ -4,7 +4,6 @@
 #
 # Copyright MonetDB Solutions B.V. 2018
 
-import gzip
 import json
 import os
 import pytest
@@ -16,14 +15,14 @@ from mal_analytics import db_manager
 @pytest.fixture(scope='module')
 def query_trace1():
     cur_dir = os.path.dirname(os.path.abspath(__file__))
-    fp = gzip.open(os.path.join(cur_dir, 'data', 'traces', 'jan2019_sf10_10threads', 'Q01_variation001.json.gz'))
+    fp = open(os.path.join(cur_dir, 'data', 'traces', 'jan2019_sf10_10threads', 'Q01_variation001.json'))
     return [json.loads(x) for x in fp.readlines()]
 
 
 @pytest.fixture(scope='module')
 def query_trace2():
     cur_dir = os.path.dirname(os.path.abspath(__file__))
-    fp = gzip.open(os.path.join(cur_dir, 'data', 'traces', 'jan2019_sf10_10threads', 'Q02_variation001.json.gz'))
+    fp = open(os.path.join(cur_dir, 'data', 'traces', 'jan2019_sf10_10threads', 'Q02_variation001.json'))
     return [json.loads(x) for x in fp.readlines()]
 
 
