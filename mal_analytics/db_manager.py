@@ -60,15 +60,6 @@ MonetDBLite operates.
         self._connection = monetdblite.make_connection(self._dbpath, True)
 
     def _initialize_tables(self):
-        # TODO define an abstract root data directory
-        cpath = os.path.dirname(os.path.abspath(__file__))
-        tables_file = os.path.join(cpath, 'data', 'tables.sql')
-        try:
-            self.execute_sql_script(tables_file)
-        except monetdblite.Error as e:
-            LOGGER.warning("Table initialization script failed:\n  %s", e)
-            self._connection.rollback()
-
         tables = [
             'mal_execution',
             'profiler_event',
@@ -80,6 +71,23 @@ MonetDBLite operates.
             'cpuload'
         ]
         cursor = self.get_cursor()
+        rslt = 0
+        for tbl in tables:
+            rslt += cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)
+
+        # All the tables already exist
+        if rslt == len(tables):
+            return
+
+        # TODO define an abstract root data directory
+        cpath = os.path.dirname(os.path.abspath(__file__))
+        tables_file = os.path.join(cpath, 'data', 'tables.sql')
+        try:
+            self.execute_sql_script(tables_file)
+        except monetdblite.Error as e:
+            LOGGER.warning("Table initialization script failed:\n  %s", e)
+            self._connection.rollback()
+
         for tbl in tables:
             rslt = cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)
             # This should never happen
@@ -193,7 +201,7 @@ function returns a tuple containing these limits.
 
         return ProfilerObjectParser(*self.get_limits())
 
-    def _prepare_csv(self, data):
+    def _prepare_csv(self, data):  # pragma: no coverage
         """Create a CSV file from the given data.
 
 The data should be a homogeneous list of dictionaries, representing
