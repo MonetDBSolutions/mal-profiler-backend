@@ -5,8 +5,8 @@ Python MAL analytics
 .. image:: https://travis-ci.org/MonetDBSolutions/mal_analytics.svg?branch=master
     :target: https://travis-ci.org/MonetDBSolutions/mal_analytics
 
-.. image:: https://coveralls.io/repos/github/MonetDBSolutions/mal_analytics/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/MonetDBSolutions/mal_analytics?branch=master
+.. image:: https://codecov.io/gh/MonetDBSolutions/mal_analytics/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/MonetDBSolutions/mal_analytics
 
 Introduction
 ============
