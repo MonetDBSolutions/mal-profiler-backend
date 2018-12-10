@@ -123,7 +123,7 @@ into a MonetDBLite-Python trace database.
         self._event_variables = {
             "event_id": list(),
             "variable_list_index": list(),
-            "variable_id": list()
+            "variable_id": list(),
         }
 
         self._heartbeats = {
@@ -332,172 +332,8 @@ database.
 
                 cnt += 1
         LOGGER.debug("%d JSON objects parsed", cnt)
-        for ss in self._event_variables.get('variable_id'):
-            if ss not in self._variables.get('variable_id'):
-                LOGGER.debug("Missing id: %d", ss)
-                break
-
         LOGGER.debug("event_variables(ids) %d", len(set(self._event_variables.get('variable_id'))))
         LOGGER.debug("variables(ids) %d", len(self._variables.get('variable_id')))
-
-    def _parse_trace(self, json_object):
-        pass
-        # '''Parses a trace object and adds it in the database
-
-        # '''
-        # cursor = self._connection.cursor()
-        # cnt = cursor.execute("SELECT execution_id FROM mal_execution WHERE server_session=%s AND tag=%s",
-        #                      [json_object['session'], json_object['tag']])
-
-        # current_session = json_object['session']
-        # current_tag = json_object['tag']
-        # if cnt == 0:
-        #     self._execution_id += 1
-        #     LOGGER.debug("Creating execution %d for session %s, tag %d",
-        #                  self._execution_id,
-        #                  json_object['session'],
-        #                  json_object['tag'])
-        #     self._execution_dict["{}:{}".format(current_session, current_tag)] = self._execution_id
-        #     # keep
-        #     cursor.execute("INSERT INTO mal_execution(server_session, tag) VALUES (%s, %s)",
-        #                    [json_object['session'], json_object['tag']])
-        # elif cnt > 1:
-        #     msg = 'more than one executions for session {} and tag {}'.format(json_object['session'], json_object['tag'])
-        #     LOGGER.error(msg)
-        #     raise exceptions.IntegrityConstraintViolation(msg)
-
-        # current_execution_id = self._execution_dict.get("{}:{}".format(json_object['session'], json_object['tag']))
-        # self._event_id += 1
-        # LOGGER.debug("parsing trace. event id: %d (session %s, tag: %d, pc: %d, state: %s)",
-        #              self._event_id,
-        #              json_object['session'],
-        #              json_object['tag'],
-        #              json_object['pc'],
-        #              json_object['state'])
-
-        # exec_state = self._states.get(json_object.get('state'))
-        # # return
-        # event_data = {
-        #     "execution_id": current_execution_id,
-        #     "pc": json_object.get('pc'),
-        #     "execution_state": exec_state,
-        #     "clk": json_object.get('clk'),
-        #     "ctime": json_object.get('ctime'),
-        #     "thread": json_object.get('thread'),
-        #     "mal_function": json_object.get('function'),
-        #     "usec": json_object.get('usec'),
-        #     "rss": json_object.get('rss'),
-        #     "size": json_object.get('size'),
-        #     "long_statement": json_object.get('stmt'),
-        #     "short_statement": json_object.get('short'),
-        #     "instruction": json_object.get('instruction'),
-        #     "mal_module": json_object.get('module')
-        # }
-
-        # # kick out
-        # ins_event_qtext = """INSERT INTO profiler_event (mal_execution_id, pc,
-        #                                                  execution_state, clk,
-        #                                                  ctime, thread,
-        #                                                  mal_function, usec, rss,
-        #                                                  type_size, long_statement,
-        #                                                  short_statement, instruction,
-        #                                                  mal_module)
-        #                      VALUES(%(execution_id)s, %(pc)s, %(execution_state)s,
-        #                             %(clk)s, %(ctime)s, %(thread)s, %(mal_function)s,
-        #                             %(usec)s, %(rss)s, %(size)s, %(long_statement)s,
-        #                             %(short_statement)s, %(instruction)s,
-        #                             %(mal_module)s)"""
-        # cursor.execute(ins_event_qtext, event_data)
-
-        # # Process prerequisite events.
-        # for prereq in json_object.get('prereq'):
-        #     cnt = cursor.execute("SELECT event_id FROM profiler_event WHERE mal_execution_id=%s AND pc=%s AND execution_state=1",
-        #                          [current_execution_id, prereq])
-        #     if cnt == 0:
-        #         msg = "event with mal_execution_id {} and pc {} not found".format(current_execution_id, prereq)
-        #         LOGGER.error(msg)
-        #         raise exceptions.MissingDataError(msg)
-        #     elif cnt > 1:
-        #         msg = "mal_execution_id {} and pc {} for done state not unique".format(current_execution_id, prereq)
-        #         LOGGER.error(msg)
-        #         raise exceptions.IntegrityConstraintViolation(msg)
-        #     prereq_event_id = int(cursor.fetchone()[0])
-        #     # kick out
-        #     ins_prereqs_qtext = """INSERT INTO prerequisite_events(prerequisite_event, consequent_event)
-        #                            VALUES (%s, %s)"""
-        #     cursor.execute(ins_prereqs_qtext, [prereq_event_id, self._event_id])
-
-        # # The algorithm to process a variable list is exactly the
-        # # same for returns and for arguments, so we should not be
-        # # duplicating code.
-        # var_list_tables = {
-        #     'ret': 'return_variable_list',
-        #     'arg': 'argument_variable_list'
-        # }
-        # for var_list_field in ('ret', 'arg'):
-        #     var_list = json_object.get(var_list_field, list())
-        #     for var in var_list:
-        #         # Have we encountered this variable before?
-        #         sel_var_qtext = "SELECT variable_id FROM mal_variable WHERE name=%s"
-        #         cnt = cursor.execute(sel_var_qtext, var['name'])
-        #         if cnt == 0:
-        #             # Nope, first time we see this
-        #             # variable. Insert it into the variables
-        #             # table.
-        #             self._variable_id += 1
-        #             sel_type_qtext = "SELECT type_id FROM mal_type WHERE tname=%s"
-        #             cnt = cursor.execute(sel_type_qtext, var['type'])
-        #             if cnt == 0:
-        #                 LOGGER.warning('Unkown type: {}'.format(var['type']))
-        #                 LOGGER.warning('Ignoring variable: {}'.format(var['name']))
-        #                 continue
-        #             res = cursor.fetchone()
-        #             type_id = res[0]
-        #             variable_data = {
-        #                 "name": var.get('name'),
-        #                 "mal_execution_id": int(current_execution_id),
-        #                 "alias": var.get('alias'),
-        #                 "type_id": int(type_id),
-        #                 "is_persistent": var.get('kind') == 'persistent',
-        #                 "bid": var.get('bid'),
-        #                 "count": var.get('count'),
-        #                 "size": var.get('size'),
-        #                 "seqbase": var.get('seqbase'),
-        #                 "hghbase": var.get('hghbase'),
-        #                 "eol": var.get('eol') == 0,
-        #                 "mal_value": var.get('value')
-        #             }
-        #             # kick out
-        #             mvar_qtext = """INSERT INTO mal_variable (name, mal_execution_id,
-        #                                                       alias, type_id, is_persistent,
-        #                                                       bid, var_count, var_size, seqbase,
-        #                                                       hghbase, eol, mal_value)
-        #                             VALUES (%(name)s, %(mal_execution_id)s, %(alias)s,
-        #                                     %(type_id)s, %(is_persistent)s, %(bid)s,
-        #                                     %(count)s, %(size)s, %(seqbase)s, %(hghbase)s, %(eol)s,
-        #                                     %(mal_value)s)"""
-        #             cursor.execute(mvar_qtext, variable_data)
-        #             current_var_id = self._variable_id
-        #         else:
-        #             # Yup, make a note of the variable id.
-        #             res = cursor.fetchone()
-        #             current_var_id = res[0]
-
-        #         var_list_data = {
-        #             'variable_list_index': var.get('index'),
-        #             'event_id': self._event_id,
-        #             'variable_id': int(current_var_id)
-        #         }
-
-        #         # kick out
-        #         lt_ins_qtext = """INSERT INTO {}(variable_list_index,
-        #                                          event_id, variable_id)
-        #                           VALUES (%(variable_list_index)s, %(event_id)s,
-        #                           %(variable_id)s)""".format(var_list_tables[var_list_field])
-
-        #         cursor.execute(lt_ins_qtext, var_list_data)
-        # # Closing the cursor is probably not needed since it will get GC'd
-        # # cursor.close()
 
     def _parse_heartbeat(self, json_object):
         '''Parse a heartbeat object and adds it to the database.
@@ -625,38 +461,38 @@ the following dictionaries:
         self._initialize_tables()
 
 
-    def parse_object(self, json_string):
-        try:
-            json_object = json.loads(json_string)
-        except json.JSONDecodeError as json_error:
-            LOGGER.warning("W001: Cannot parse object")
-            LOGGER.warning(json_string)
-            LOGGER.warning("Decoder reports %s", json_error)
-            return
+    # def parse_object(self, json_string):
+    #     try:
+    #         json_object = json.loads(json_string)
+    #     except json.JSONDecodeError as json_error:
+    #         LOGGER.warning("W001: Cannot parse object")
+    #         LOGGER.warning(json_string)
+    #         LOGGER.warning("Decoder reports %s", json_error)
+    #         return
 
-        dispatcher = {
-            'trace': self._parse_event,
-            'heartbeat': self._parse_heartbeat
-        }
+    #     dispatcher = {
+    #         'trace': self._parse_event,
+    #         'heartbeat': self._parse_heartbeat
+    #     }
 
-        source = json_object.get('source')
-        if source is None:
-            LOGGER.error("Unkown JSON object")
-            LOGGER.error(">%s<", json_object['source'])
-            return
+    #     source = json_object.get('source')
+    #     if source is None:
+    #         LOGGER.error("Unkown JSON object")
+    #         LOGGER.error(">%s<", json_object['source'])
+    #         return
 
-        try:
-            parse_func = dispatcher[source]
-        except KeyError:
-            # TODO raise exception?
-            LOGGER.error("Unkown JSON object kind: %s", source)
-            return
+    #     try:
+    #         parse_func = dispatcher[source]
+    #     except KeyError:
+    #         # TODO raise exception?
+    #         LOGGER.error("Unkown JSON object kind: %s", source)
+    #         return
 
-        try:
-            parse_func(json_object)
-        except exceptions.MalParserError as e:
-            LOGGER.warning("Parsing JSON Object\n  %s\nfailed:\n  %s", json_object, str(e))
-            return
+    #     try:
+    #         parse_func(json_object)
+    #     except exceptions.MalParserError as e:
+    #         LOGGER.warning("Parsing JSON Object\n  %s\nfailed:\n  %s", json_object, str(e))
+    #         return
 
     # def get_connection(self):
     #     """Get the MonetDBLite connection"""
