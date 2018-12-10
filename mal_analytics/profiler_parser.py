@@ -34,6 +34,7 @@ into a MonetDBLite-Python trace database.
         self._heartbeat_id = heartbeat_id
         self._prerequisite_relation_id = prereq_id
 
+        self._var_name_to_id = dict()
         self._execution_dict = dict()
         self._states = {'start': 0, 'done': 1, 'pause': 2}
 
@@ -147,9 +148,16 @@ into a MonetDBLite-Python trace database.
 :param var_data: A dictionary representing the JSON description of a MAL variable.
 :returns: A dictionary representing a variable. See :ref:`data_structures`.
 '''
-        self._variable_id += 1
+        var_id = self._var_name_to_id.get(var_data.get("name"))
+
+        new_var = False
+        if var_id is None:
+            self._variable_id += 1
+            var_id = self._variable_id
+            new_var = True
+
         variable = {
-            "variable_id": self._variable_id,
+            "variable_id": var_id,
             "mal_execution_id": current_execution_id,
             "type_id": self._type_dict.get(var_data.get("type"), -1),
             "name": var_data.get('name'),
@@ -165,6 +173,8 @@ into a MonetDBLite-Python trace database.
             "parent": var_data.get('parent'),
             "list_index": var_data.get('index')
         }
+        if new_var:
+            self._var_name_to_id[var_data.get("name")] = self._variable_id
 
         return variable
 
@@ -214,21 +224,12 @@ into a MonetDBLite-Python trace database.
                 var_name = parsed_var.get('name')
                 if var_name is None:
                     raise exceptions.MalParserError('Unnamed variable')
-                if var_name in referenced_vars:
-                    # Ignore variables we have encountered
-                    # already. This will happen in the following case
-                    # for example:
-                    # X_117[2]:= subsum( X_5013[120], X_105[120], C_106[2], true, true )
-                    # because the literal `true` is used twice.
-                    # LOGGER.warning('Variable named %s already in referenced_vars', var_name)
-                    continue
                 referenced_vars[var_name] = parsed_var
-                var = {
+                event_variables.append({
                     "event_id": self._event_id,
                     "variable_list_index": parsed_var.get('list_index'),
                     "variable_id": parsed_var.get('variable_id')
-                }
-                event_variables.append(var)
+                })
 
         return (event_data, prereq_list, referenced_vars, event_variables)
 
@@ -274,7 +275,7 @@ database.
         for json_event in json_stream:
             src = json_event.get("source")
             if src == "trace":
-                event_data, prereq_list, referenced_vars, event_lists = self._parse_event(json_event)
+                event_data, prereq_list, referenced_vars, event_variables = self._parse_event(json_event)
                 prev_execution = execution
                 if json_event.get('session') is None or json_event.get('tag') is None:
                     # LOGGER.debug(json_event)
@@ -300,11 +301,6 @@ database.
                     var_name_list = list()
 
                 for var_name, var in referenced_vars.items():
-                    self._event_variables['event_id'].append(event_data['event_id'])
-                    self._event_variables['variable_list_index'].append(var.get('list_index'))
-                    # NOTE: this violates the foreign key. Why?
-                    self._event_variables['variable_id'].append(var['variable_id'])
-
                     # Ignore variables that we have already seen
                     if var_name in var_name_list:
                         continue
@@ -319,6 +315,12 @@ database.
                             continue
                         self._variables[k].append(v)
 
+                for evariable in event_variables:
+                    self._event_variables['event_id'].append(evariable.get('event_id'))
+                    self._event_variables['variable_list_index'].append(evariable.get('variable_list_index'))
+                    # NOTE: this violates the foreign key. Why?
+                    self._event_variables['variable_id'].append(evariable.get('variable_id'))
+
 
                 for pev in prereq_list:
                     self._prerequisite_relation_id += 1
@@ -330,6 +332,13 @@ database.
 
                 cnt += 1
         LOGGER.debug("%d JSON objects parsed", cnt)
+        for ss in self._event_variables.get('variable_id'):
+            if ss not in self._variables.get('variable_id'):
+                LOGGER.debug("Missing id: %d", ss)
+                break
+
+        LOGGER.debug("event_variables(ids) %d", len(set(self._event_variables.get('variable_id'))))
+        LOGGER.debug("variables(ids) %d", len(self._variables.get('variable_id')))
 
     def _parse_trace(self, json_object):
         pass
