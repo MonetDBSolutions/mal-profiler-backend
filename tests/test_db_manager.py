@@ -38,6 +38,7 @@ class TestDatabaseManager(object):
         parser.parse_trace_stream(query_trace1)
 
         parsed_data = parser.get_data()
+        parser.clear_internal_state()
         for k, v in parsed_data.items():
             manager_object.insert_data(k, v)
 
