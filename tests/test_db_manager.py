@@ -33,6 +33,7 @@ class TestDatabaseManager(object):
         assert hbid == 0
         assert erid == 0
 
+    @pytest.mark.skip()
     def test_limits_full_db(self, manager_object, query_trace1):
         parser = manager_object.create_parser()
         parser.parse_trace_stream(query_trace1)
