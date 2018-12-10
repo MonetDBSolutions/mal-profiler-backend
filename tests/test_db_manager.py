@@ -32,3 +32,18 @@ class TestDatabaseManager(object):
         assert varid == 0
         assert hbid == 0
         assert erid == 0
+
+    def test_limits_full_db(self, manager_object, query_trace1):
+        parser = manager_object.create_parser()
+        parser.parse_trace_stream(query_trace1)
+
+        parsed_data = parser.get_data()
+        for k, v in parsed_data.items():
+            manager_object.insert_data(k, v)
+
+        (exid, evid, varid, hbid, erid) = manager_object.get_limits()
+        assert exid == 1
+        assert evid == 1456
+        assert varid == 865
+        assert hbid == 0
+        assert erid == 2474
