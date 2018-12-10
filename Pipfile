@@ -15,6 +15,7 @@ sphinx = "*"
 python-language-server = {extras = ["all"],version = "*"}
 matplotlib = "*"
 pytest-cov = "*"
+codecov = "*"
 
 [dev-packages]
 
