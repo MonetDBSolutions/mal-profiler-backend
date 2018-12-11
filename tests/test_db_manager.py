@@ -33,15 +33,31 @@ class TestDatabaseManager(object):
         assert hbid == 0
         assert erid == 0
 
-    @pytest.mark.skip()
+    # @pytest.mark.skip()
     def test_limits_full_db(self, manager_object, query_trace1):
         parser = manager_object.create_parser()
         parser.parse_trace_stream(query_trace1)
 
         parsed_data = parser.get_data()
         parser.clear_internal_state()
+
+        # Note: For Python < 3.7 order of elements.values() is not
+        # guaranteed. More specifically the the order of elements
+        # in a dictionary is an implementation detail, so
+        # different implementations can conceivably have different
+        # element orders.
+        #
+        # For Python >= 3.7 the order of elements is guaranteed to
+        # be the insertion order.
+        #
+        # For Python 3.6 the implementation is the same as that of
+        # Python 3.7.
+        #
+        # See this explanation: https://stackoverflow.com/a/15479974
+        manager_object.drop_constraints()
         for k, v in parsed_data.items():
             manager_object.insert_data(k, v)
+        manager_object.add_constraints()
 
         (exid, evid, varid, hbid, erid) = manager_object.get_limits()
         assert exid == 1

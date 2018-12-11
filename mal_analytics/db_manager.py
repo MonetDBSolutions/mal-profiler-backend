@@ -216,18 +216,6 @@ it in CSV form and writes it to a temporary file.
         keys = data[0].keys()
         csv_lines = ""
         for element in data:
-            # Note: For Python < 3.7 order of elements.values() is not
-            # guaranteed. More specifically the the order of elements
-            # in a dictionary is an implementation detail, so
-            # different implementations can conceivably have different
-            # element orders.
-            #
-            # For Python >= 3.7 the order of elements is guaranteed to
-            # be the insertion order.
-            #
-            # TODO: Consider using an OrderedDict
-            #
-            # See this explanation: https://stackoverflow.com/a/15479974
             csv_lines += "|".join([str(c) for c in element.values()])
             csv_lines += "\n"
 
@@ -245,6 +233,16 @@ it in CSV form and writes it to a temporary file.
             cursor.insert(table, data)
         except monetdblite.Error as err:
             LOGGER.warning("Did not insert data to %s\nError: %s", table, str(err))
-            LOGGER.warning(data)
+            # LOGGER.warning(data)
 
         cursor.close()
+
+    def drop_constraints(self):
+        cpath = os.path.dirname(os.path.abspath(__file__))
+        drop_file = os.path.join(cpath, 'data', 'drop_constraints.sql')
+        self.execute_sql_script(drop_file)
+
+
+    def add_constraints(self):
+        cpath = os.path.dirname(os.path.abspath(__file__))
+        drop_file = os.path.join(cpath, 'data', 'add_constraints.sql')
