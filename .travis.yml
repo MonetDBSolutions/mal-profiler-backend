@@ -16,6 +16,19 @@ install: pip install tox-travis
 
 script: tox
 
+build: python setup.py sdist
+
+deploy:
+  provider: pypi
+  server: https://test.pypi.org/legacy
+  user: kutsurak
+  password:
+    # test.pypi
+    secure: "fvAsJqAsPMDNGYYCkND0122loTqOi7GMRd4gIe5IfkuYe4w8EqXcgdWs+sbIc/Jnl7D2CUpnSRNJakIEZ/mZsXiH2DqPAI5iwlXPW/hoOWDoJslplArH59xM80oha2Cw7dLFt/PHbIgGSx8DzONiOPoivAClPqDdqgfdGn2XQTj6cw6GXvinoh2hXD/1oUDhmlx9mqqN8lVKAMxAltKnd8F0edwAm3XZZ6Mi1zmUXgPjbZb/MiKaYIN0RKAkTjydJwP5yDCiKxfl/cDa4X4BO73a29PvkrkbXiQsISdBu6yOrZQ7D2YZ1407KHsoEIKP2JhapndEaOJBUEt+GeVPb64XjGjaY27tw/STi3aBgrk6v64oHeXJjR2v1P0RkGGBge9wQXJWEwlUgS6GJvm9DmZh88FVklL+rfbX0odeMwZyYhqJGV7tPHvCMlBJ1bZIp6mcTELtD0h2i5LSYHnp/xeCRQapS7JQ+goaeBED09CX4/6eHsXnq5gB3QyUehu8yeRoFOrKqlPznulexo0nrRZsn5cUnFOi1p+7NtmGpkVtCXNYOhsjKqL5nypC3PfE/GQo01fFt+9foVbKasSiRLoyNXADWvG+Bmbees328yq9rmRWaRSh5gVCKNGWY+qQYDYfuLjq6ei0g55nZkFvpV/tfIJGsa5aJ8M7WAm3dCM="
+  on:
+    tags: true
+
+
 notifications:
   email:
     on_success: change
