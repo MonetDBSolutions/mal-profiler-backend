@@ -20,7 +20,7 @@ build: python setup.py sdist
 
 deploy:
   provider: pypi
-  server: https://test.pypi.org/legacy
+  server: https://test.pypi.org/legacy/
   user: kutsurak
   password:
     # test.pypi
