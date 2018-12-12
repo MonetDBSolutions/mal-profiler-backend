@@ -13,7 +13,7 @@ with open(path.join(this_directory, 'README.rst')) as f:
 
 setup(
     name="mal_analytics",
-    version="0.1.0.dev1",
+    version="0.1.0.dev2",
     packages=find_packages(),
     long_description=long_description,
     long_description_content_type='text/x-rst',
