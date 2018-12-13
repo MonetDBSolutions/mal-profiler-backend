@@ -10,8 +10,8 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 [Unreleased]
 ============
 
-v0.1.0
-======
+v0.1.0 (2018-12-13)
+===================
 Added
 *****
 * DatabaseManager class. Instantiates a *singleton* object that
