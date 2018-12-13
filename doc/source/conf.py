@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'MAL Analytics'
-copyright = '2018, Panagiotis Koutsourakis'
+copyright = '2018, MonetDB Solutions B.V.'
 author = 'Panagiotis Koutsourakis'
 
 # The short X.Y version
