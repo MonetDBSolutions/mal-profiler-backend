@@ -9,12 +9,17 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 
 [Unreleased]
 ============
+
+v0.1.0
+======
 Added
 *****
-* Schema for the trace/heartbeat database
-* Parser for traces
-* Parser for heartbeats
-* An abstraction layer to facilitate opening of compressed files
-  (currently supports .gz and .bz2 files)
+* DatabaseManager class. Instantiates a *singleton* object that
+  handles communication with the database.
+* ProfilerObjectParser class. Code for parsing trace JSON objects.
+* SQL script to create tables in the database.
 * SQL scripts for dropping and adding constraints in order to
   accelerate data loading.
+* Functions to facilitate opening of compressed files
+  (currently supports .gz and .bz2 files).
+* Test suite.
