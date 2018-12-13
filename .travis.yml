@@ -22,7 +22,7 @@ deploy:
   provider: pypi
   # server: https://test.pypi.org/legacy/
   skip_existing: true
-  user: kutsurak
+  user: monetdb
   password:
     # pypi.org
     secure: "kRfkaBD55ksk6QJXzq6HNntI4/x2yz2NUPW9/If9+sA1+psiSlQ52FjVwhHm65SchtfBC7a6M7sqUdT5rV6Ub6nbhIJbfB2BhqnL/NZjvROT1Hh/Sx1xUho8Nt4oqbEcPE7Wb5J8JFuvcdddxIhA8AO5WQkzyP7yKpr4mU2MDfBcp70s/GICQmEBP0TnOV2BV9JoADXM63PBhNGzV6bu7PkV3aQYCbD2XmwDY9JEoDET+Ys2pdB3arZKQBSrNV8JuVMmRtEYyw8LPGIiM3XGpqwoVPjwenriNDlbBN2/m9T3RA7qHUHgdbKlAr13rtDoalWNGUA8GpYdSumTOW/QRIVxfvt220h8KCShv99HPI5W7L4dzKqjKVuXqnlg6YouJo3sxeTGbVpJIHGMryYbYHxulAg9Jz00vaoUaM9QrGnwJghsMbuV6P0wX+tWdGvmlI6qmIeNgERASJNSIbdQFzmzMMxI7EFg4OD2iUPx0ylvWA7azLEd6T/srSrAmkWBQVnn9IX2rVpbsBhcsX5U/+S3y5OH0W27Yu4pg2NKuiCDSZjdO51EiNM5ew+PDWtDinq6OepvlbIO+vVXaKKmCGmrCNsRJNVihrSwhTaX8H71PHeMTPYXlZSrFF4aahMzVf6RYilEMUAeByKzjxxrT3JC3zQh0TE8ujB2QarxhCc="
