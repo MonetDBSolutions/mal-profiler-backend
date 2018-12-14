@@ -42,12 +42,22 @@ ALTER TABLE event_variable_list ADD
 ALTER TABLE event_variable_list ADD
     CONSTRAINT fk_evl_variable_id FOREIGN KEY (variable_id) REFERENCES mal_variable(variable_id);
 
--- ALTER TABLE argument_variable_list ADD
---      CONSTRAINT pk_argument_variable_list PRIMARY KEY (argument_list_id);
--- ALTER TABLE argument_variable_list ADD
---     CONSTRAINT fk_av_event_id FOREIGN KEY (event_id) REFERENCES profiler_event(event_id);
--- ALTER TABLE argument_variable_list ADD
---     CONSTRAINT fk_av_variable_id FOREIGN KEY (variable_id) REFERENCES mal_variable(variable_id);
+ALTER TABLE query ADD
+    CONSTRAINT pk_query PRIMARY KEY (query_id);
+
+ALTER TABLE query_executions ADD
+    CONSTRAINT pk_query_executions PRIMARY KEY (query_executions_id);
+ALTER TABLE query_executions ADD
+    CONSTRAINT fk_query_id FOREIGN KEY (query_id) REFERENCES query(query_id);
+ALTER TABLE query_executions ADD
+    CONSTRAINT fk_mal_execution_id FOREIGN KEY (mal_execution_id) REFERENCES mal_execution(execution_id);
+
+ALTER TABLE supervises_executions ADD
+    CONSTRAINT pk_supervises_executions PRIMARY KEY (supervises_executions_id);
+ALTER TABLE supervises_executions ADD
+    CONSTRAINT fk_supervisor_id FOREIGN KEY (supervisor_id) REFERENCES mal_execution(execution_id);
+ALTER TABLE supervises_executions ADD
+    CONSTRAINT fk_worker_id FOREIGN KEY (supervisor_id) REFERENCES mal_execution(execution_id);
 
 ALTER TABLE heartbeat ADD
     CONSTRAINT pk_heartbeat PRIMARY KEY (heartbeat_id);

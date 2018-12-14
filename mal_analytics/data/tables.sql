@@ -89,20 +89,31 @@ create table event_variable_list (
        constraint fk_evl_variable_id foreign key (variable_id) references mal_variable(variable_id)
 );
 
--- create table argument_variable_list (
---        argument_list_id bigint,
---        variable_list_index int,
---        event_id bigint,
---        variable_id bigint,
+create table query (
+       query_id bigint,
 
---        constraint pk_argument_variable_list primary key (argument_list_id),
---        constraint fk_av_event_id foreign key (event_id) references profiler_event(event_id),
---        constraint fk_av_variable_id foreign key (variable_id) references mal_variable(variable_id)
--- );
+       constraint pk_query primary key (query_id)
+);
 
--- commit;
+create table query_executions (
+       query_executions_id bigint,
+       query_id bigint,
+       mal_execution_id bigint,
 
--- start transaction;
+       constraint pk_query_executions primary key (query_executions_id),
+       constraint fk_query_id foreign key (query_id) references query(query_id),
+       constraint fk_mal_execution_id foreign key (mal_execution_id) references mal_execution(execution_id)
+);
+
+create table supervises_executions (
+       supervises_executions_id bigint,
+       supervisor_id bigint,
+       worker_id bigint,
+
+       constraint pk_supervises_executions primary key (supervises_executions_id),
+       constraint fk_supervisor_id foreign key (supervisor_id) references mal_execution(execution_id),
+       constraint fk_worker_id foreign key (supervisor_id) references mal_execution(execution_id)
+);
 
 create table heartbeat (
        heartbeat_id bigint,

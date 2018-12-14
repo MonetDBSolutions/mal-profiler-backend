@@ -23,7 +23,9 @@ class TestCreation(object):
             'mal_type',
             'mal_variable',
             'event_variable_list',
-            # 'argument_variable_list',
+            'query',
+            'query_executions',
+            'supervises_executions',
             'heartbeat',
             'cpuload'
         ]
