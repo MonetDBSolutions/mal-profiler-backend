@@ -233,6 +233,20 @@ class TestParser(object):
                 "variable_list_index",
                 "variable_id",
             ],
+            "query": [
+                "query_id",
+                "query_text"
+            ],
+            "query_executions": [
+                "query_executions_id",
+                "query_id",
+                "mal_execution_id"
+            ],
+            "supervises_executions": [
+                "supervises_executions_id",
+                "supervisor_id",
+                "worker_id"
+            ],
             "heartbeat": [
                 "heartbeat_id",
                 "server_session",
@@ -263,12 +277,16 @@ class TestParser(object):
             "prerequisite_events": 2474,
             "mal_variable": 865,
             "event_variable_list": 5636,
+            "query": 1,
+            "query_executions": 1,
+            "supervises_executions": 1,
             "heartbeat": 0,
             "cpuload": 0
         }
         parser_object.parse_trace_stream(query_trace1)
 
         result = parser_object.get_data()
+        assert len(result) == len(truth)
 
         for table in result:
             for field in result[table]:
@@ -281,6 +299,9 @@ class TestParser(object):
             "prerequisite_events": 6598,
             "mal_variable": 1886,
             "event_variable_list": 13418,
+            "query": 2,
+            "query_executions": 2,
+            "supervises_executions": 2,
             "heartbeat": 0,
             "cpuload": 0
         }
@@ -289,6 +310,7 @@ class TestParser(object):
         parser_object.parse_trace_stream(query_trace2)
 
         result = parser_object.get_data()
+        assert len(result) == len(truth)
 
         for table in result:
             for field in result[table]:

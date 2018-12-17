@@ -126,6 +126,23 @@ into a MonetDBLite-Python trace database.
             "variable_id": list(),
         }
 
+        self._query = {
+            "query_id": list(),
+            "query_text": list()
+        }
+
+        self._query_executions = {
+            "query_executions_id": list(),
+            "query_id": list(),
+            "mal_execution_id": list()
+        }
+
+        self._supervises_executions = {
+            "supervises_executions_id": list(),
+            "supervisor_id": list(),
+            "worker_id": list()
+        }
+
         self._heartbeats = {
             "heartbeat_id": list(),
             "server_session": list(),
@@ -422,6 +439,25 @@ the following dictionaries:
           + variable_list_index
           + variable_id
 
+        - A dictionary for queries with the following keys:
+
+          + query_id
+          + query_text
+
+        - A dictionary for relating queries to executions, with the
+          following keys:
+
+          + query_executions_id
+          + query_id
+          + max_execution_id
+
+        - A dictionary expressing the relation of execution
+          supervision, with the following keys:
+
+          + supervises_executions_id
+          + supervisor_id
+          + worker_id
+
         - A dictionary for heartbeats with the following keys:
 
           + heartbeat_id
@@ -443,6 +479,9 @@ the following dictionaries:
             "prerequisite_events": self._prerequisite_events,
             "mal_variable": self._variables,
             "event_variable_list": self._event_variables,
+            "query": self._query,
+            "query_executions": self._query_executions,
+            "supervises_executions": self._supervises_executions,
             "heartbeat": self._heartbeats,
             "cpuload": self._cpuloads
         }
