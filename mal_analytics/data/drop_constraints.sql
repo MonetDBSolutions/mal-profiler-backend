@@ -39,15 +39,10 @@ ALTER TABLE profiler_event
 ALTER TABLE profiler_event
     DROP CONSTRAINT unique_pe_profiler_event;
 
-ALTER TABLE query_executions
-    DROP CONSTRAINT fk_query_id;
-ALTER TABLE query_executions
-    DROP CONSTRAINT fk_mal_execution_id;
-ALTER TABLE query_executions
-    DROP CONSTRAINT pk_query_executions;
-
 ALTER TABLE query
     DROP CONSTRAINT pk_query;
+ALTER TABLE query
+    DROP CONSTRAINT fk_supervisor_execution_id;
 
 ALTER TABLE supervises_executions
     DROP CONSTRAINT fk_supervisor_id;

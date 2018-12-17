@@ -24,15 +24,22 @@ into a MonetDBLite-Python trace database.
 :param variable_id: The maximum variable id in the database
 :param heartbeat_id: The maximum heartbeat id in the database
 :param prereq_id: The maximum prerequisite relation id in the database
+:param query_id: The maximum query id in the database
+:param supervises_executions_id: The maximum query_executions id in the database
 '''
 
-    def __init__(self, execution_id=0, event_id=0, variable_id=0, heartbeat_id=0, prereq_id=0):
+    # TODO: consolidate all the parameters in a dictionary
+    def __init__(self, execution_id=0, event_id=0, variable_id=0,
+                 heartbeat_id=0, prereq_id=0, query_id=0,
+                 supervises_executions_id=0):
         logging.basicConfig(level=logging.DEBUG)
         self._execution_id = execution_id
         self._event_id = event_id
         self._variable_id = variable_id
         self._heartbeat_id = heartbeat_id
         self._prerequisite_relation_id = prereq_id
+        self._query_id = query_id
+        self._supervises_executions_id = supervises_executions_id
 
         self._var_name_to_id = dict()
         self._execution_dict = dict()
@@ -126,21 +133,19 @@ into a MonetDBLite-Python trace database.
             "variable_id": list(),
         }
 
+        # If I remove query_text or supervisor_execution_id
+        # test_limits_full_db coredumps on manager.insert_data
+        # (monetdblite.insert?).
         self._query = {
             "query_id": list(),
-            "query_text": list()
-        }
-
-        self._query_executions = {
-            "query_executions_id": list(),
-            "query_id": list(),
-            "mal_execution_id": list()
+            "query_text": list(),
+            "supervisor_execution_id": list(),
         }
 
         self._supervises_executions = {
             "supervises_executions_id": list(),
             "supervisor_id": list(),
-            "worker_id": list()
+            "worker_id": list(),
         }
 
         self._heartbeats = {
@@ -231,6 +236,30 @@ into a MonetDBLite-Python trace database.
             "version": json_object.get("version"),
         }
 
+        query_data = None
+        supervises_executions_data = None
+        if event_data['instruction'] == 'define' and event_data['mal_module'] == 'querylog' and event_data['execution_state'] == 0:
+            self._query_id += 1
+            query_data = {
+                "query_id": self._query_id,
+                "query_text": event_data['short_statement'],
+                "supervisor_execution_id": event_data['mal_execution_id']
+            }
+            LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
+        # TODO this is incomplete
+        elif event_data['instruction'] == 'register_supervisor' and event_data['mal_module'] == '123':
+            self._supervises_executions_id += 1
+            # TODO: parse the arguments to register_supervisor
+            supervisor_session = '1'
+            supervisor_tag = 2
+
+            supervises_executions_data = {
+                "supervises_executions_id": self._supervises_executions_id,
+                "supervisor_id": self._get_execution_id(
+                    supervisor_session, supervisor_tag
+                ),
+                "worker_id": event_data['max_execution_id']
+            }
         prereq_list = json_object.get("prereq")
         referenced_vars = dict()
         event_variables = list()
@@ -248,7 +277,14 @@ into a MonetDBLite-Python trace database.
                     "variable_id": parsed_var.get('variable_id')
                 })
 
-        return (event_data, prereq_list, referenced_vars, event_variables)
+        return (
+            event_data,
+            prereq_list,
+            referenced_vars,
+            event_variables,
+            query_data,
+            supervises_executions_data
+        )
 
     def _get_execution_id(self, session, tag, version=None):
         '''Return the (local) execution id for the given session and tag
@@ -292,7 +328,7 @@ database.
         for json_event in json_stream:
             src = json_event.get("source")
             if src == "trace":
-                event_data, prereq_list, referenced_vars, event_variables = self._parse_event(json_event)
+                event_data, prereq_list, referenced_vars, event_variables, query_data, supervises_executions_data = self._parse_event(json_event)
                 prev_execution = execution
                 if json_event.get('session') is None or json_event.get('tag') is None:
                     # LOGGER.debug(json_event)
@@ -347,6 +383,9 @@ database.
 
                     # prerequisite_events.append((pev, event_data['event_id']))
 
+                if query_data is not None:
+                    for k, v in query_data.items():
+                        self._query.get(k).append(v)
                 cnt += 1
         LOGGER.debug("%d JSON objects parsed", cnt)
         LOGGER.debug("event_variables(ids) %d", len(set(self._event_variables.get('variable_id'))))
@@ -444,13 +483,6 @@ the following dictionaries:
           + query_id
           + query_text
 
-        - A dictionary for relating queries to executions, with the
-          following keys:
-
-          + query_executions_id
-          + query_id
-          + max_execution_id
-
         - A dictionary expressing the relation of execution
           supervision, with the following keys:
 
@@ -480,7 +512,6 @@ the following dictionaries:
             "mal_variable": self._variables,
             "event_variable_list": self._event_variables,
             "query": self._query,
-            "query_executions": self._query_executions,
             "supervises_executions": self._supervises_executions,
             "heartbeat": self._heartbeats,
             "cpuload": self._cpuloads

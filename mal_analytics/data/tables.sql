@@ -92,18 +92,10 @@ create table event_variable_list (
 create table query (
        query_id bigint,
        query_text text,
+       supervisor_execution_id bigint,
 
-       constraint pk_query primary key (query_id)
-);
-
-create table query_executions (
-       query_executions_id bigint,
-       query_id bigint,
-       mal_execution_id bigint,
-
-       constraint pk_query_executions primary key (query_executions_id),
-       constraint fk_query_id foreign key (query_id) references query(query_id),
-       constraint fk_mal_execution_id foreign key (mal_execution_id) references mal_execution(execution_id)
+       constraint pk_query primary key (query_id),
+       constraint fk_supervisor_execution_id foreign key (supervisor_execution_id) references mal_execution(execution_id)
 );
 
 create table supervises_executions (

@@ -44,13 +44,8 @@ ALTER TABLE event_variable_list ADD
 
 ALTER TABLE query ADD
     CONSTRAINT pk_query PRIMARY KEY (query_id);
-
-ALTER TABLE query_executions ADD
-    CONSTRAINT pk_query_executions PRIMARY KEY (query_executions_id);
-ALTER TABLE query_executions ADD
-    CONSTRAINT fk_query_id FOREIGN KEY (query_id) REFERENCES query(query_id);
-ALTER TABLE query_executions ADD
-    CONSTRAINT fk_mal_execution_id FOREIGN KEY (mal_execution_id) REFERENCES mal_execution(execution_id);
+ALTER TABLE query ADD
+    CONSTRAINT fk_supervisor_execution_id FOREIGN KEY (supervisor_execution_id) REFERENCES mal_execution(execution_id);
 
 ALTER TABLE supervises_executions ADD
     CONSTRAINT pk_supervises_executions PRIMARY KEY (supervises_executions_id);
