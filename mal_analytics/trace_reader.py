@@ -56,9 +56,7 @@ def read_object(fl):
 def parse_trace(filename, database_path):
     dbm = DatabaseManager(database_path)
 
-    cpath = os.path.dirname(os.path.abspath(__file__))
-    drop_constraints_script = os.path.join(cpath, 'data', 'drop_constraints.sql')
-    dbm.execute_sql_script(drop_constraints_script)
+    dbm.drop_constraints()
 
     pob = dbm.create_parser()
 
@@ -80,5 +78,4 @@ def parse_trace(filename, database_path):
         dbm.insert_data(table, data)
 
     pob.clear_internal_state()
-    add_constraints_script = os.path.join(cpath, 'data', 'add_constraints.sql')
-    dbm.execute_sql_script(add_constraints_script)
+    dbm.add_constraints()
