@@ -170,7 +170,8 @@ into a MonetDBLite-Python trace database.
 :param var_data: A dictionary representing the JSON description of a MAL variable.
 :returns: A dictionary representing a variable. See :ref:`data_structures`.
 '''
-        var_id = self._var_name_to_id.get(var_data.get("name"))
+        var_key = "{}:{}".format(current_execution_id, var_data.get("name"))
+        var_id = self._var_name_to_id.get(var_key)
 
         new_var = False
         if var_id is None:
@@ -178,6 +179,12 @@ into a MonetDBLite-Python trace database.
             var_id = self._variable_id
             new_var = True
 
+        # LOGGER.debug("variable id = %d, new var = %d", var_id, new_var)
+        bid = var_data.get('bid', -1)
+        # bid can have the value MIN_INT - 1 if it has been garbage
+        # collected. Maybe?
+        if bid < 0:
+            bid = None
         variable = {
             "variable_id": var_id,
             "mal_execution_id": current_execution_id,
@@ -185,7 +192,7 @@ into a MonetDBLite-Python trace database.
             "name": var_data.get('name'),
             "alias": var_data.get('alias'),
             "is_persistent": var_data.get('kind') == 'persistent',
-            "bid": var_data.get('bid'),
+            "bid": bid,
             "var_count": var_data.get('count'),
             "var_size": var_data.get('size', 0),
             "seqbase": var_data.get('seqbase'),
@@ -196,7 +203,7 @@ into a MonetDBLite-Python trace database.
             "list_index": var_data.get('index')
         }
         if new_var:
-            self._var_name_to_id[var_data.get("name")] = self._variable_id
+            self._var_name_to_id[var_key] = self._variable_id
 
         return variable
 
@@ -331,7 +338,6 @@ database.
                 event_data, prereq_list, referenced_vars, event_variables, query_data, supervises_executions_data = self._parse_event(json_event)
                 prev_execution = execution
                 if json_event.get('session') is None or json_event.get('tag') is None:
-                    # LOGGER.debug(json_event)
                     LOGGER.debug(json_event)
                     raise exceptions.MalParserError('Missing session or tag')
                 execution = self._get_execution_id(json_event.get('session'), json_event.get('tag'))
@@ -346,19 +352,20 @@ database.
                     self._events[k].append(v)
 
 
-                # Variables and variable names are scoped by executions
-                # (session + tag combinations). Between different
-                # executions variables with the same name are allowed to
-                # exist.
-                if execution != prev_execution:
-                    var_name_list = list()
+                # if execution != prev_execution:
+                #     var_name_list = list()
 
                 for var_name, var in referenced_vars.items():
                     # Ignore variables that we have already seen
-                    if var_name in var_name_list:
+                    # Variables and variable names are scoped by executions
+                    # (session + tag combinations). Between different
+                    # executions variables with the same name are allowed to
+                    # exist.
+                    scoped_variable = "{}:{}".format(execution, var_name)
+                    if scoped_variable in var_name_list:
                         continue
 
-                    var_name_list.append(var_name)
+                    var_name_list.append(scoped_variable)
 
                     var['mal_execution_id'] = execution
                     # Add new variable to the table
