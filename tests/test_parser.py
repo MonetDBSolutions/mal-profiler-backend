@@ -286,7 +286,7 @@ class TestParser(object):
 
         for table in result:
             for field in result[table]:
-                assert len(result[table][field]) == truth[table]
+                assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
     @pytest.mark.xfail()
     def test_parse_multiple_traces(self, parser_object, query_trace1, query_trace2):
@@ -310,7 +310,7 @@ class TestParser(object):
 
         for table in result:
             for field in result[table]:
-                assert len(result[table][field]) == truth[table]
+                assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
     def test_clear_data(self, parser_object, query_trace1):
         parser_object.parse_trace_stream(query_trace1)
