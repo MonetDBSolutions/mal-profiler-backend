@@ -352,9 +352,6 @@ database.
                     self._events[k].append(v)
 
 
-                # if execution != prev_execution:
-                #     var_name_list = list()
-
                 for var_name, var in referenced_vars.items():
                     # Ignore variables that we have already seen
                     # Variables and variable names are scoped by executions
@@ -395,8 +392,6 @@ database.
                         self._query.get(k).append(v)
                 cnt += 1
         LOGGER.debug("%d JSON objects parsed", cnt)
-        LOGGER.debug("event_variables(ids) %d", len(set(self._event_variables.get('variable_id'))))
-        LOGGER.debug("variables(ids) %d", len(self._variables.get('variable_id')))
 
     def _parse_heartbeat(self, json_object):
         '''Parse a heartbeat object and adds it to the database.
