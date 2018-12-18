@@ -247,4 +247,5 @@ it in CSV form and writes it to a temporary file.
 
     def add_constraints(self):
         cpath = os.path.dirname(os.path.abspath(__file__))
-        drop_file = os.path.join(cpath, 'data', 'add_constraints.sql')
+        add_file = os.path.join(cpath, 'data', 'add_constraints.sql')
+        self.execute_sql_script(add_file)
