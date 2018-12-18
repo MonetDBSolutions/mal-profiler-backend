@@ -25,6 +25,11 @@ def query_trace2():
     fp = open(os.path.join(cur_dir, 'data', 'traces', 'jan2019_sf10_10threads', 'Q02_variation001.json'))
     return [json.loads(x) for x in fp.readlines()]
 
+@pytest.fixture(scope='module')
+def query_trace3():
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    fp = open(os.path.join(cur_dir, 'data', 'traces', 'distributed', 'supervisor.json'))
+    return [json.loads(x) for x in fp.readlines()]
 
 @pytest.fixture(scope='module')
 def single_event():
@@ -38,7 +43,6 @@ def parser_object():
     parser = profiler_parser.ProfilerObjectParser()
 
     return parser
-
 
 @pytest.fixture(scope='function')
 def manager_object(tmp_path):

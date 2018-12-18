@@ -312,6 +312,28 @@ class TestParser(object):
             for field in result[table]:
                 assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
+    def test_parse_trace_multiple_executions(self, parser_object, query_trace3):
+        truth = {
+            "mal_execution": 3,
+            "profiler_event": 116,
+            "prerequisite_events": 122,
+            "mal_variable": 88,
+            "event_variable_list": 344,
+            "query": 1,
+            "supervises_executions": 0,
+            "heartbeat": 0,
+            "cpuload": 0
+        }
+
+        parser_object.parse_trace_stream(query_trace3)
+
+        result = parser_object.get_data()
+        assert len(result) == len(truth)
+
+        for table in result:
+            for field in result[table]:
+                assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
+
     def test_clear_data(self, parser_object, query_trace1):
         parser_object.parse_trace_stream(query_trace1)
         parser_object.clear_internal_state()
