@@ -243,30 +243,6 @@ into a MonetDBLite-Python trace database.
             "version": json_object.get("version"),
         }
 
-        query_data = None
-        supervises_executions_data = None
-        if event_data['instruction'] == 'define' and event_data['mal_module'] == 'querylog' and event_data['execution_state'] == 0:
-            self._query_id += 1
-            query_data = {
-                "query_id": self._query_id,
-                "query_text": event_data['short_statement'],
-                "supervisor_execution_id": event_data['mal_execution_id']
-            }
-            LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
-        # TODO this is incomplete
-        elif event_data['instruction'] == 'register_supervisor' and event_data['mal_module'] == '123':
-            self._supervises_executions_id += 1
-            # TODO: parse the arguments to register_supervisor
-            supervisor_session = '1'
-            supervisor_tag = 2
-
-            supervises_executions_data = {
-                "supervises_executions_id": self._supervises_executions_id,
-                "supervisor_id": self._get_execution_id(
-                    supervisor_session, supervisor_tag
-                ),
-                "worker_id": event_data['max_execution_id']
-            }
         prereq_list = json_object.get("prereq")
         referenced_vars = dict()
         event_variables = list()
@@ -283,6 +259,39 @@ into a MonetDBLite-Python trace database.
                     "variable_list_index": parsed_var.get('list_index'),
                     "variable_id": parsed_var.get('variable_id')
                 })
+
+        query_data = None
+        supervises_executions_data = None
+        if event_data['instruction'] == 'define' and event_data['mal_module'] == 'querylog' and event_data['execution_state'] == 0:
+            self._query_id += 1
+            query_data = {
+                "query_id": self._query_id,
+                "query_text": event_data['short_statement'],
+                "supervisor_execution_id": event_data['mal_execution_id']
+            }
+            LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
+        elif event_data['instruction'] == 'register_supervisor' and event_data['mal_module'] == 'remote':
+            # get the arguments of the register_supervisor call
+            for v in referenced_vars.values():
+                if v['list_index'] == 1:
+                    supervisor_session = v['mal_value'][1:-1]
+                elif v['list_index'] == 2:
+                    worker_uuid = v['mal_value'][1:-1]
+
+            # Add this
+            # supervisor_session, supervisor_tag, worker_uuid
+            # if we are not in the supervisor, supervisor_tag is missing
+            LOGGER.debug("supervisor session = %s", supervisor_session)
+            LOGGER.debug("worker uuid = %s", worker_uuid)
+            self._supervises_executions_id += 1
+
+            # supervises_executions_data = {
+            #     "supervises_executions_id": self._supervises_executions_id,
+            #     "supervisor_id": self._get_execution_id(
+            #         supervisor_session, supervisor_tag
+            #     ),
+            #     "worker_id": event_data['max_execution_id']
+            # }
 
         return (
             event_data,
