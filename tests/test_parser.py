@@ -266,7 +266,6 @@ class TestParser(object):
                 assert vk in result[k]
                 assert len(result[k][vk]) == 0
 
-    @pytest.mark.xfail()
     def test_parse_single_trace(self, parser_object, query_trace1):
         truth = {
             "mal_execution": 1,
@@ -275,7 +274,7 @@ class TestParser(object):
             "mal_variable": 865,
             "event_variable_list": 5636,
             "query": 1,
-            "supervises_executions": 1,
+            "supervises_executions": 0,
             "heartbeat": 0,
             "cpuload": 0
         }
@@ -288,7 +287,6 @@ class TestParser(object):
             for field in result[table]:
                 assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
-    @pytest.mark.xfail()
     def test_parse_multiple_traces(self, parser_object, query_trace1, query_trace2):
         truth = {
             "mal_execution": 2,
@@ -297,7 +295,7 @@ class TestParser(object):
             "mal_variable": 1886,
             "event_variable_list": 13418,
             "query": 2,
-            "supervises_executions": 2,
+            "supervises_executions": 0,
             "heartbeat": 0,
             "cpuload": 0
         }
