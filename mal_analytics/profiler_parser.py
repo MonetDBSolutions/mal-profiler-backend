@@ -576,6 +576,9 @@ the following dictionaries:
           + val
 
         """
+        if len(self._supervisor_association) > 0:
+            LOGGER.debug("supervisor association table not empty: %s",
+                         self._supervisor_association)
         return {
             "mal_execution": self._executions,
             "profiler_event": self._events,
