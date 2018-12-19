@@ -310,7 +310,7 @@ class TestParser(object):
             for field in result[table]:
                 assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
-    def test_parse_trace_multiple_executions(self, parser_object, query_trace3):
+    def test_parse_trace_multiple_executions(self, parser_object, supervisor_trace):
         truth = {
             "mal_execution": 3,
             "profiler_event": 116,
@@ -323,7 +323,7 @@ class TestParser(object):
             "cpuload": 0
         }
 
-        parser_object.parse_trace_stream(query_trace3)
+        parser_object.parse_trace_stream(supervisor_trace)
 
         result = parser_object.get_data()
         assert len(result) == len(truth)
@@ -332,6 +332,29 @@ class TestParser(object):
             for field in result[table]:
                 assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
+    @pytest.mark.xfail()
+    def test_parse_distributed_traces(self, parser_object, supervisor_trace, worker1_trace, worker2_trace):
+        truth = {
+            "mal_execution": 33,
+            "profiler_event": 282,
+            "prerequisite_events": 144,
+            "mal_variable": 182,
+            "event_variable_list": 568,
+            "query": 1,
+            "supervises_executions": 2,
+            "heartbeat": 0,
+            "cpuload": 0
+        }
+        parser_object.parse_trace_stream(supervisor_trace)
+        parser_object.parse_trace_stream(worker1_trace)
+        parser_object.parse_trace_stream(worker2_trace)
+
+        result = parser_object.get_data()
+        assert len(result) == len(truth)
+
+        for table in result:
+            for field in result[table]:
+                assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
     def test_clear_data(self, parser_object, query_trace1):
         parser_object.parse_trace_stream(query_trace1)
         parser_object.clear_internal_state()

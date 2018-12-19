@@ -26,9 +26,21 @@ def query_trace2():
     return [json.loads(x) for x in fp.readlines()]
 
 @pytest.fixture(scope='module')
-def query_trace3():
+def supervisor_trace():
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     fp = open(os.path.join(cur_dir, 'data', 'traces', 'distributed', 'supervisor.json'))
+    return [json.loads(x) for x in fp.readlines()]
+
+@pytest.fixture(scope='module')
+def worker1_trace():
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    fp = open(os.path.join(cur_dir, 'data', 'traces', 'distributed', 'worker1.json'))
+    return [json.loads(x) for x in fp.readlines()]
+
+@pytest.fixture(scope='module')
+def worker2_trace():
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    fp = open(os.path.join(cur_dir, 'data', 'traces', 'distributed', 'worker2.json'))
     return [json.loads(x) for x in fp.readlines()]
 
 @pytest.fixture(scope='module')
