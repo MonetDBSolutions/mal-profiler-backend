@@ -85,6 +85,7 @@ into a MonetDBLite-Python trace database.
             "server_session": list(),
             "tag": list(),
             "server_version": list(),
+            "user_function": list(),
         }
 
         self._events = {
@@ -223,9 +224,24 @@ into a MonetDBLite-Python trace database.
 '''
 
         self._event_id += 1
-        current_execution_id = self._get_execution_id(json_object.get("session"),
-                                                      json_object.get("tag"),
-                                                      json_object.get("version"))
+        current_execution_id = self._get_execution_id(json_object.get('session'), json_object.get('tag'))
+        if current_execution_id is None:
+            instruction = json_object.get('instruction')
+            if json_object.get('pc') != 0:
+                # Surprisingly this can happen. I noticed it on remote
+                # table queries.
+                LOGGER.warning("Instruction with pc==0 missing for execution {}:{}".format(
+                    json_object.get('session'),
+                    json_object.get('tag')
+                ))
+                instruction = json_object.get('function').split('.')[1]
+            current_execution_id = self._set_execution_id(
+                json_object.get('session'),
+                json_object.get('tag'),
+                instruction,
+                json_object.get('version')
+            )
+
         event_data = {
             "event_id": self._event_id,
             "mal_execution_id": current_execution_id,
@@ -355,17 +371,9 @@ into a MonetDBLite-Python trace database.
             supervises_executions_data
         )
 
-    def _get_execution_id(self, session, tag, version=None):
-        '''Return the (local) execution id for the given session and tag
-
-        '''
-
-        # LOGGER.debug(session)
-        # LOGGER.debug(tag)
-        # LOGGER.debug(version)
+    def _set_execution_id(self, session, tag, user_function, server_version=None):
         key = "{}:{}".format(session, tag)
         execution_id = self._execution_dict.get(key)
-        # LOGGER.debug("Execution ID = %s", execution_id)
 
         if execution_id is None:
             self._execution_id += 1
@@ -376,9 +384,22 @@ into a MonetDBLite-Python trace database.
             self._executions['execution_id'].append(execution_id)
             self._executions['server_session'].append(session)
             self._executions['tag'].append(tag)
-            self._executions['server_version'].append(version)
+            self._executions['user_function'].append(user_function)
+            self._executions['server_version'].append(server_version)
 
-        return execution_id
+            return execution_id
+        else:
+            raise MalParserError("execution for session {}, tag {} already registered".format(
+                session, tag
+            ))
+
+
+    def _get_execution_id(self, session, tag):
+        '''Return the (local) execution id for the given session and tag
+
+        '''
+
+        return self._execution_dict.get("{}:{}".format(session, tag))
 
     def parse_trace_stream(self, json_stream):
         '''Parse a list of json trace objects
@@ -397,11 +418,16 @@ database.
         for json_event in json_stream:
             src = json_event.get("source")
             if src == "trace":
-                event_data, prereq_list, referenced_vars, event_variables, query_data, supervises_executions_data = self._parse_event(json_event)
                 prev_execution = execution
-                if json_event.get('session') is None or json_event.get('tag') is None:
-                    LOGGER.debug(json_event)
-                    raise exceptions.MalParserError('Missing session or tag')
+
+                if json_event.get('session') is None:
+                    LOGGER.error(json_event)
+                    raise exceptions.MalParserError('Missing session')
+                elif json_event.get('tag') is None:
+                    LOGGER.error(json_event)
+                    raise exceptions.MalParserError('Missing tag')
+
+                event_data, prereq_list, referenced_vars, event_variables, query_data, supervises_executions_data = self._parse_event(json_event)
                 execution = self._get_execution_id(json_event.get('session'), json_event.get('tag'))
                 event_data['mal_execution_id'] = execution
                 # events.append(event_data)
@@ -501,6 +527,7 @@ the following dictionaries:
           + server_session
           + tag
           + server_version
+          + user_function
 
         - A dictionary for events with the following keys:
 

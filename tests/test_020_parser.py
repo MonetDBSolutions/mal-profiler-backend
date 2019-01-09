@@ -172,8 +172,10 @@ class TestParser(object):
         session = "dc2c13b3-8bde-4706-8ee5-60703a176325"
 
         id1 = parser_object._get_execution_id(session, tag1)
+        assert id1 is None
+        id1 = parser_object._set_execution_id(session, tag1, 'main', '12')
         id2 = parser_object._get_execution_id(session, tag1)
-        id3 = parser_object._get_execution_id(session, tag2)
+        id3 = parser_object._set_execution_id(session, tag2, 'main', '12')
 
         assert id1 == id2
         assert id2 != id3
@@ -189,6 +191,7 @@ class TestParser(object):
                 "server_session",
                 "tag",
                 "server_version",
+                "user_function",
             ],
             "profiler_event": [
                 "event_id",
@@ -311,22 +314,20 @@ class TestParser(object):
             for field in result[table]:
                 assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
-    def test_parse_trace_multiple_executions(self, parser_object, supervisor_trace, worker1_trace, worker2_trace):
+    def test_parse_trace_multiple_executions(self, parser_object, supervisor_trace):
         truth = {
-            "mal_execution": 33,
-            "profiler_event": 280,
-            "prerequisite_events": 142,
-            "mal_variable": 182,
-            "event_variable_list": 564,
+            "mal_execution": 3,
+            "profiler_event": 116,
+            "prerequisite_events": 122,
+            "mal_variable": 88,
+            "event_variable_list": 344,
             "query": 1,
-            "supervises_executions": 2,
+            "supervises_executions": 1,
             "heartbeat": 0,
             "cpuload": 0
         }
 
         parser_object.parse_trace_stream(supervisor_trace)
-        parser_object.parse_trace_stream(worker1_trace)
-        parser_object.parse_trace_stream(worker2_trace)
 
         result = parser_object.get_data()
         assert len(result) == len(truth)
@@ -335,14 +336,13 @@ class TestParser(object):
             for field in result[table]:
                 assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
-    @pytest.mark.xfail()
     def test_parse_distributed_traces(self, parser_object, supervisor_trace, worker1_trace, worker2_trace):
         truth = {
             "mal_execution": 33,
-            "profiler_event": 282,
-            "prerequisite_events": 144,
+            "profiler_event": 280,
+            "prerequisite_events": 142,
             "mal_variable": 182,
-            "event_variable_list": 568,
+            "event_variable_list": 564,
             "query": 1,
             "supervises_executions": 2,
             "heartbeat": 0,

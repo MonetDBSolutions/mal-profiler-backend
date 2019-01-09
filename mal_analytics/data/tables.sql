@@ -9,6 +9,7 @@ create table mal_execution (
        server_session char(36) not null,
        tag int not null,
        server_version char(120),
+       user_function char(30),
 
        constraint pk_mal_execution primary key (execution_id),
        constraint unique_me_mal_execution unique(server_session, tag)
