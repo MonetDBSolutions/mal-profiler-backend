@@ -314,10 +314,10 @@ class TestParser(object):
     def test_parse_trace_multiple_executions(self, parser_object, supervisor_trace, worker1_trace, worker2_trace):
         truth = {
             "mal_execution": 33,
-            "profiler_event": 282,
-            "prerequisite_events": 144,
+            "profiler_event": 280,
+            "prerequisite_events": 142,
             "mal_variable": 182,
-            "event_variable_list": 568,
+            "event_variable_list": 564,
             "query": 1,
             "supervises_executions": 2,
             "heartbeat": 0,
