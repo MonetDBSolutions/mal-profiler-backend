@@ -26,12 +26,14 @@ class TestDatabaseManager(object):
     def test_limits_empty_db(self, manager_object):
         # result = manager_object.execute_query("SELECT * FROM mal_execution")
         # print(result)
-        (exid, evid, varid, hbid, erid) = manager_object.get_limits()
+        (exid, evid, varid, hbid, erid, qid, supid) = manager_object.get_limits()
         assert exid == 0
         assert evid == 0
         assert varid == 0
         assert hbid == 0
         assert erid == 0
+        assert qid == 0
+        assert supid == 0
 
     # @pytest.mark.skip()
     def test_limits_full_db(self, manager_object, query_trace1):
@@ -59,9 +61,11 @@ class TestDatabaseManager(object):
             manager_object.insert_data(k, v)
         manager_object.add_constraints()
 
-        (exid, evid, varid, hbid, erid) = manager_object.get_limits()
+        (exid, evid, varid, hbid, erid, qid, supid) = manager_object.get_limits()
         assert exid == 1
         assert evid == 1456
         assert varid == 865
         assert hbid == 0
         assert erid == 2474
+        assert qid == 1
+        assert supid == 1
