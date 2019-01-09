@@ -55,9 +55,6 @@ def read_object(fl):
 
 def parse_trace(filename, database_path):
     dbm = DatabaseManager(database_path)
-
-    dbm.drop_constraints()
-
     pob = dbm.create_parser()
 
     with abstract_open(filename) as fl:
@@ -66,16 +63,20 @@ def parse_trace(filename, database_path):
         json_stream = list()
         json_string = read_object(fl)
         while json_string:
-            json_stream.append(json.loads(json_string))
+            try:
+                json_stream.append(json.loads(json_string))
+            except Exception as e:
+                LOGGER.error("JSON parser failed for file %s:\n %s", filename, e)
+                raise
             json_string = read_object(fl)
 
 
     pob.parse_trace_stream(json_stream)
+    dbm.drop_constraints()
     for table, data in pob.get_data().items():
         # print("Inserting data in", table)
         #for k, v in data.items():
             # print("  ", k, " => ", len(v))
         dbm.insert_data(table, data)
-
-    pob.clear_internal_state()
     dbm.add_constraints()
+    pob.clear_internal_state()
