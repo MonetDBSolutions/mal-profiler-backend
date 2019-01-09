@@ -236,6 +236,7 @@ class TestParser(object):
             "query": [
                 "query_id",
                 "query_text",
+                "query_label",
                 "supervisor_execution_id"
             ],
             "supervises_executions": [
@@ -355,6 +356,7 @@ class TestParser(object):
         for table in result:
             for field in result[table]:
                 assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
+
     def test_clear_data(self, parser_object, query_trace1):
         parser_object.parse_trace_stream(query_trace1)
         parser_object.clear_internal_state()

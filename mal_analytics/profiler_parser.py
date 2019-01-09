@@ -140,6 +140,7 @@ into a MonetDBLite-Python trace database.
         self._query = {
             "query_id": list(),
             "query_text": list(),
+            "query_label": list(),
             "supervisor_execution_id": list(),
         }
 
@@ -268,6 +269,7 @@ into a MonetDBLite-Python trace database.
             query_data = {
                 "query_id": self._query_id,
                 "query_text": event_data['short_statement'],
+                "query_label": None,
                 "supervisor_execution_id": event_data['mal_execution_id']
             }
             LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))

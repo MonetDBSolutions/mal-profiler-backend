@@ -92,6 +92,7 @@ create table event_variable_list (
 create table query (
        query_id bigint,
        query_text text,
+       query_label text,
        supervisor_execution_id bigint,
 
        constraint pk_query primary key (query_id),
