@@ -84,7 +84,7 @@ into a MonetDBLite-Python trace database.
             "execution_id": list(),
             "server_session": list(),
             "tag": list(),
-            "version": list(),
+            "server_version": list(),
         }
 
         self._events = {
@@ -376,7 +376,7 @@ into a MonetDBLite-Python trace database.
             self._executions['execution_id'].append(execution_id)
             self._executions['server_session'].append(session)
             self._executions['tag'].append(tag)
-            self._executions['version'].append(version)
+            self._executions['server_version'].append(version)
 
         return execution_id
 
@@ -500,7 +500,7 @@ the following dictionaries:
           + execution_id
           + server_session
           + tag
-          + version
+          + server_version
 
         - A dictionary for events with the following keys:
 

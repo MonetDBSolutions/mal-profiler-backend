@@ -188,7 +188,7 @@ class TestParser(object):
                 "execution_id",
                 "server_session",
                 "tag",
-                "version",
+                "server_version",
             ],
             "profiler_event": [
                 "event_id",
