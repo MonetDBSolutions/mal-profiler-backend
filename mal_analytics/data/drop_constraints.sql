@@ -42,14 +42,14 @@ ALTER TABLE profiler_event
 ALTER TABLE query
     DROP CONSTRAINT pk_query;
 ALTER TABLE query
-    DROP CONSTRAINT fk_supervisor_execution_id;
+    DROP CONSTRAINT fk_root_execution_id;
 
-ALTER TABLE supervises_executions
-    DROP CONSTRAINT fk_supervisor_id;
-ALTER TABLE supervises_executions
-    DROP CONSTRAINT fk_worker_id;
-ALTER TABLE supervises_executions
-    DROP CONSTRAINT pk_supervises_executions;
+ALTER TABLE initiates_executions
+    DROP CONSTRAINT fk_parent_id;
+ALTER TABLE initiates_executions
+    DROP CONSTRAINT fk_child_id;
+ALTER TABLE initiates_executions
+    DROP CONSTRAINT pk_initiates_executions;
 
 ALTER TABLE mal_execution
     DROP CONSTRAINT pk_mal_execution;
