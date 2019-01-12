@@ -344,7 +344,7 @@ class TestParser(object):
             "mal_variable": 182,
             "event_variable_list": 564,
             "query": 1,
-            "supervises_executions": 2,
+            "supervises_executions": 3,
             "heartbeat": 0,
             "cpuload": 0
         }

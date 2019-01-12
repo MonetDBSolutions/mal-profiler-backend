@@ -297,7 +297,7 @@ into a MonetDBLite-Python trace database.
                 "supervisor_id": current_execution_id,
                 "worker_id": current_execution_id
             })
-        elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' :
+        elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' and event_data['execution_state'] == 0:
             # In queries over remote tables the plan is split in
             # several executions. One of these is the supervisor
             # execution that orchestrates the worker executions. The
@@ -343,20 +343,20 @@ into a MonetDBLite-Python trace database.
                     # association so that we are able to resolve the
                     # data supervises_executions table when we
                     # encounter the corresponding worker node.
-                    self._supervisor_association[supervisor_session] = current_execution_id
+                    self._supervisor_association[worker_uuid] = current_execution_id
             else:
                 # We are at the worker execution.
 
-                # First search if we have encountered the worker UUID
+                # First search if we have encountered the supervisor UUID
                 # before. If yes we can resolve the data.
-                if supervisor_session in self._supervisor_association:
+                if worker_uuid in self._supervisor_association:
                     self._supervises_executions_id += 1
                     supervises_executions_data.append({
                         "supervises_executions_id": self._supervises_executions_id,
-                        "supervisor_id": self._supervisor_association[supervisor_session],
+                        "supervisor_id": self._supervisor_association[worker_uuid],
                         "worker_id": current_execution_id,
                     })
-                    del self._supervisor_association[supervisor_session]
+                    del self._supervisor_association[worker_uuid]
                 else:
                     # Make a note of the association so that we are
                     # able to resolve the data later.
