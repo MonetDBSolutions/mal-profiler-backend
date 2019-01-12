@@ -97,6 +97,10 @@ MonetDBLite operates.
                 LOGGER.error("Did not find table %s in database %s", tbl, self.get_dbpath)
                 raise InitializationError("Database {} did not initialize properly (table {} not found)".format(self.get_dbpath, tbl))
 
+    def _disconnect(self):
+        self._connection.close()
+        self._connection = None
+
     def get_dbpath(self):
         """Get the location on disk of the database.
 
@@ -236,7 +240,7 @@ it in CSV form and writes it to a temporary file.
         try:
             cursor.insert(table, data)
         except monetdblite.Error as err:
-            LOGGER.warning("Did not insert data to %s\nError: %s", table, str(err))
+            LOGGER.error("Did not insert data to %s\nError: %s", table, str(err))
             # LOGGER.warning(data)
 
         cursor.close()

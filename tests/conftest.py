@@ -43,13 +43,6 @@ def worker2_trace():
     fp = open(os.path.join(cur_dir, 'data', 'traces', 'distributed', 'worker2.json'))
     return [json.loads(x) for x in fp.readlines()]
 
-@pytest.fixture(scope='module')
-def single_event():
-    cur_dir = os.path.dirname(os.path.abspath(__file__))
-    fp = open(os.path.join(cur_dir, 'data', 'single_event_formatted.json'))
-    return ''.join(fp.readlines())
-
-
 @pytest.fixture(scope='function')
 def parser_object():
     parser = profiler_parser.ProfilerObjectParser()

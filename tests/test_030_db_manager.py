@@ -7,6 +7,7 @@
 import pytest
 
 from mal_analytics import db_manager
+from mal_analytics.exceptions import DatabaseManagerError
 
 
 class TestDatabaseManager(object):
@@ -69,3 +70,8 @@ class TestDatabaseManager(object):
         assert erid == 2474
         assert qid == 1
         assert supid == 1
+
+    def test_insert_without_connection(self, manager_object):
+        manager_object._disconnect()
+        with pytest.raises(DatabaseManagerError):
+            manager_object.insert_data("abc", None)
