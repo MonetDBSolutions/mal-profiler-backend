@@ -61,3 +61,8 @@ def manager_object(tmp_path):
         manager = db_manager.DatabaseManager(db_path)
 
     return manager
+
+@pytest.fixture(scope='function')
+def filenames():
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    return [os.path.join(cur_dir, 'data', 'traces', 'files', fl) for fl in ['trace.json', 'trace.json.gz', 'trace.json.bz2']]

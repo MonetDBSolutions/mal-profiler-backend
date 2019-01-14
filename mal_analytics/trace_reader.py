@@ -17,13 +17,13 @@ from mal_analytics.db_manager import DatabaseManager
 LOGGER = logging.getLogger(__name__)
 
 
-def test_gzip(filename):
+def is_gzip(filename):
     '''Checks the if the first two bytes of the file match the gzip magic number'''
     with open(filename, 'rb') as ff:
         return binascii.hexlify(ff.read(2)) == b'1f8b'
 
 
-def test_bz2(filename):
+def is_bzip2(filename):
     '''Checks the if the first two bytes of the file match the bz2 magic number'''
     with open(filename, 'rb') as ff:
         return binascii.hexlify(ff.read(2)) == b'425a'
@@ -33,8 +33,8 @@ def abstract_open(filename):
     '''Open a file for reading, automatically detecting a number of compression schemes
     '''
     compressions = {
-        test_gzip: gzip.open,
-        test_bz2: bz2.open
+        is_gzip: gzip.open,
+        is_bzip2: bz2.open
     }
 
     for tst, fcn in compressions.items():
@@ -53,7 +53,7 @@ def read_object(fl):
             return json_string
             # print(json_string)
 
-def parse_trace(filename, database_path):
+def parse_trace(filename, database_path):  # pragma: no coverage
     dbm = DatabaseManager(database_path)
     pob = dbm.create_parser()
 
