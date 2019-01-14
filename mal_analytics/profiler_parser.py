@@ -519,7 +519,7 @@ database.
 The data is ready to be inserted into MonetDBLite.
 
 :returns: A dictionary, with keys the names of the tables and values
-the following dictionaries:
+  the following dictionaries:
 
         - A dictionary for executions with the following keys:
 

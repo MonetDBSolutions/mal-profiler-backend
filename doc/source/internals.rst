@@ -3,6 +3,21 @@
 Internals
 =========
 
+.. _database_schema:
+
+Database Schema
+^^^^^^^^^^^^^^^
+
+.. _database_manager:
+
+Database Manager
+^^^^^^^^^^^^^^^^
+
+.. _profiler_parser:
+
+Profiler Parser
+^^^^^^^^^^^^^^^
+
 .. _data_structures:
 
 Data Structures
