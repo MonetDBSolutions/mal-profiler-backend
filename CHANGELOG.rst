@@ -16,8 +16,10 @@ Added
 * A user defined mnemonic label for queries
 * Limits for the new tables
 * New tables:
-  * query
-  * supervises_executions
+
+  - query
+  - supervises_executions
+
 * Support for distributed queries (Remote table)
 
 v0.1.0 (2018-12-13)
