@@ -9,6 +9,14 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 
 [Unreleased]
 ============
+Changed
+*******
+* Only the query text is now inserted in the db, instead of the string
+  ``define("<query>", "<optimizer>", <number>)``
+* ``DatabaseManager::execute`` returns now the results using the
+  ``fetchnumpy`` call of MonetDBLite
+* Refactored the constructor of ``ProfilerObjectParser`` in order to
+  pass one dictionary with the limits.
 
 
 v0.2.0 (2019-01-14)
