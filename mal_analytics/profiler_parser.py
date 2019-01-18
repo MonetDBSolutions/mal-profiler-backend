@@ -30,18 +30,15 @@ into a MonetDBLite-Python trace database.
 :param supervises_executions_id: The maximum query_executions id in the database
 '''
 
-    # TODO: consolidate all the parameters in a dictionary
-    def __init__(self, execution_id=0, event_id=0, variable_id=0,
-                 heartbeat_id=0, prereq_id=0, query_id=0,
-                 supervises_executions_id=0):
+    def __init__(self, limits=dict()):
         logging.basicConfig(level=logging.DEBUG)
-        self._execution_id = execution_id
-        self._event_id = event_id
-        self._variable_id = variable_id
-        self._heartbeat_id = heartbeat_id
-        self._prerequisite_relation_id = prereq_id
-        self._query_id = query_id
-        self._supervises_executions_id = supervises_executions_id
+        self._execution_id = limits.get('max_execution_id', 0)
+        self._event_id = limits.get('max_event_id', 0)
+        self._variable_id = limits.get('max_variable_id', 0)
+        self._heartbeat_id = limits.get('max_heartbeat_id', 0)
+        self._prerequisite_relation_id = limits.get('max_prerequisite_id', 0)
+        self._query_id = limits.get('max_query_id', 0)
+        self._supervises_executions_id = limits.get('max_supervises_id', 0)
 
         self._supervisor_association = dict()
         self._var_name_to_id = dict()

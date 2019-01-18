@@ -17,24 +17,18 @@ class TestDatabaseManager(object):
         assert new_manager is manager_object, "Objects are not the same"
 
     def test_execute_query(self, manager_object):
-        result = manager_object.execute_query("SELECT count(*) FROM profiler_event")
-        assert result == [[0]]
+        result = manager_object.execute_query("SELECT count(*) AS pe_count FROM profiler_event")
+        assert len(result['pe_count']) == 1
+        assert result['pe_count'][0] == 0
 
     def test_execute_bad_query(self, manager_object):
         result = manager_object.execute_query("This is not a correct SQL query")
         assert result is None
 
     def test_limits_empty_db(self, manager_object):
-        # result = manager_object.execute_query("SELECT * FROM mal_execution")
-        # print(result)
-        (exid, evid, varid, hbid, erid, qid, supid) = manager_object.get_limits()
-        assert exid == 0
-        assert evid == 0
-        assert varid == 0
-        assert hbid == 0
-        assert erid == 0
-        assert qid == 0
-        assert supid == 0
+        limits = manager_object.get_limits()
+        for v in limits.values():
+            assert v == 0
 
     # @pytest.mark.skip()
     def test_limits_full_db(self, manager_object, query_trace1):
@@ -62,14 +56,18 @@ class TestDatabaseManager(object):
             manager_object.insert_data(k, v)
         manager_object.add_constraints()
 
-        (exid, evid, varid, hbid, erid, qid, supid) = manager_object.get_limits()
-        assert exid == 1
-        assert evid == 1456
-        assert varid == 865
-        assert hbid == 0
-        assert erid == 2474
-        assert qid == 1
-        assert supid == 1
+        truth = {
+            'max_execution_id': 1,
+            'max_event_id': 1456,
+            'max_variable_id': 865,
+            'max_heartbeat_id': 0,
+            'max_prerequisite_id': 2474,
+            'max_query_id': 1,
+            'max_supervises_id': 1,
+        }
+        limits = manager_object.get_limits()
+        for k, v in truth.items():
+            assert limits[k] == v
 
     def test_insert_without_connection(self, manager_object):
         manager_object._disconnect()

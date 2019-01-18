@@ -117,7 +117,7 @@ MonetDBLite operates.
         cursor = self._connection.cursor()
         try:
             cursor.execute(query)
-            results = cursor.fetchall()
+            results = cursor.fetchnumpy()
         except monetdblite.Error as e:
             LOGGER.warning("query\n  %s\n failed with message: %s", query, e)
             results = None
@@ -187,19 +187,21 @@ function returns a tuple containing these limits.
 
 """
 
-        limit_queries = [
-            "SELECT MAX(execution_id) FROM mal_execution",
-            "SELECT MAX(event_id) FROM profiler_event",
-            "SELECT MAX(variable_id) FROM mal_variable",
-            "SELECT MAX(heartbeat_id) FROM heartbeat",
-            "SELECT MAX(prerequisite_relation_id) FROM prerequisite_events",
-            "SELECT MAX(query_id) FROM query",
-            "SELECT MAX(supervises_executions_id) FROM supervises_executions"
+        query_template = "SELECT MAX({id_column}) AS {alias} FROM {table}"
+        queries = [
+            {'id_column': 'execution_id', 'alias': 'max_execution_id', 'table': 'mal_execution'},
+            {'id_column': 'event_id', 'alias': 'max_event_id', 'table': 'profiler_event'},
+            {'id_column': 'variable_id', 'alias': 'max_variable_id', 'table': 'mal_variable'},
+            {'id_column': 'heartbeat_id', 'alias': 'max_heartbeat_id', 'table': 'heartbeat'},
+            {'id_column': 'prerequisite_relation_id', 'alias': 'max_prerequisite_id', 'table': 'prerequisite_events'},
+            {'id_column': 'query_id', 'alias': 'max_query_id', 'table': 'query'},
+            {'id_column': 'supervises_executions_id', 'alias': 'max_supervises_id', 'table': 'supervises_executions'},
         ]
-        results = [self.execute_query(q) for q in limit_queries]
 
-        # if x[0][0] is None return 0
-        return [(x[0][0] or 0) for x in results]
+        results = dict([(x['alias'], self.execute_query(query_template.format(**x))[x['alias']][0] or 0) for x in queries])
+        print(results)
+
+        return results
 
     def create_parser(self):
         """Create and initialize a new :class:`mal_analytics.profiler_parser.ProfilerObjectParser` object.
@@ -207,7 +209,7 @@ function returns a tuple containing these limits.
 :returns: A new parser for MonetDB JSON Profiler objects
         """
 
-        return ProfilerObjectParser(*self.get_limits())
+        return ProfilerObjectParser(self.get_limits())
 
     def _prepare_csv(self, data):  # pragma: no coverage
         """Create a CSV file from the given data.
