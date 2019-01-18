@@ -13,6 +13,7 @@ import os
 
 from mal_analytics.profiler_parser import ProfilerObjectParser
 from mal_analytics.db_manager import DatabaseManager
+from mal_analytics.exceptions import *
 
 LOGGER = logging.getLogger(__name__)
 
@@ -72,11 +73,14 @@ def parse_trace(filename, database_path):  # pragma: no coverage
 
 
     pob.parse_trace_stream(json_stream)
-    dbm.drop_constraints()
-    for table, data in pob.get_data().items():
-        # print("Inserting data in", table)
-        #for k, v in data.items():
-            # print("  ", k, " => ", len(v))
-        dbm.insert_data(table, data)
-    dbm.add_constraints()
+    dbm.transaction()
+    try:
+        dbm.drop_constraints()
+        for table, data in pob.get_data().items():
+            dbm.insert_data(table, data)
+        dbm.add_constraints()
+    except AnalyticsException as e:
+        LOGGER.error(e)
+        dbm.rollback()
+    dbm.commit()
     pob.clear_internal_state()

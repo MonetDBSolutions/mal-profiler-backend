@@ -257,3 +257,12 @@ it in CSV form and writes it to a temporary file.
         cpath = os.path.dirname(os.path.abspath(__file__))
         add_file = os.path.join(cpath, 'data', 'add_constraints.sql')
         self.execute_sql_script(add_file)
+
+    def transaction(self):  # pragma: no coverage
+        self._connection.transaction()
+
+    def commit(self):  # pragma: no coverage
+        self._connection.commit()
+
+    def rollback(self):  # pragma: no coverage
+        self._connection.rollback()

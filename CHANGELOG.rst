@@ -9,6 +9,13 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 
 [Unreleased]
 ============
+Added
+*****
+* Wrappers for ``Connection::transaction``, ``Connection::commit`` and
+  ``Connection::rollback``.
+* An ``AnalyticsException`` that is the at the root of the exception
+  hierarchy for this package.
+
 Changed
 *******
 * Only the query text is now inserted in the db, instead of the string

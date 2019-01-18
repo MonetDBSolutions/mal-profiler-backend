@@ -5,7 +5,10 @@
 # Copyright MonetDB Solutions B.V. 2018-2019
 
 
-class MalParserError(Exception):
+class AnalyticsException(Exception):
+    pass
+
+class MalParserError(AnalyticsException):
     """Base class for any parser exception"""
     pass
 
@@ -20,7 +23,7 @@ class MissingDataError(MalParserError):
     pass
 
 
-class DatabaseManagerError(Exception):
+class DatabaseManagerError(AnalyticsException):
     pass
 
 
