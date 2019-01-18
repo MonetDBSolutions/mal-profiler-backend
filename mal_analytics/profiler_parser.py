@@ -6,6 +6,8 @@
 
 import json
 import logging
+import re
+
 import mal_analytics.exceptions as exceptions
 
 
@@ -135,7 +137,7 @@ into a MonetDBLite-Python trace database.
             "variable_id": list(),
         }
 
-        # If I remove query_text or supervisor_execution_id
+        # BUG: If I remove query_text or supervisor_execution_id
         # test_limits_full_db coredumps on manager.insert_data
         # (monetdblite.insert?).
         self._query = {
@@ -209,6 +211,21 @@ into a MonetDBLite-Python trace database.
             self._var_name_to_id[var_key] = self._variable_id
 
         return variable
+
+    def _parse_query_text(self, short_description):
+        p = re.compile(r"^define\((.+)\)")
+        m = p.match(short_description)
+        qtext = None
+        if m:
+            define_arguments = m.group(1)
+            # The following assumes that the arguments to
+            # querylog.define are 3 and the last two arguments do not
+            # contain the character ','.
+            end = define_arguments.rfind(',', 0, define_arguments.rfind(','))
+            qtext = define_arguments[:end].strip()
+            qtext = qtext[1:-1]  # remove quotes
+
+        return qtext
 
     def _parse_event(self, json_object):
         '''Parse a single profiler event
@@ -284,7 +301,7 @@ into a MonetDBLite-Python trace database.
             self._query_id += 1
             query_data = {
                 "query_id": self._query_id,
-                "query_text": event_data['short_statement'],
+                "query_text": self._parse_query_text(event_data['short_statement']),  # TODO: find the value of the variable with index=1
                 "query_label": None,
                 "supervisor_execution_id": event_data['mal_execution_id']
             }
