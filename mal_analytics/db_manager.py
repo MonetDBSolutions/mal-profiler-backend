@@ -108,7 +108,7 @@ MonetDBLite operates.
 """
         return self._dbpath
 
-    def execute_query(self, query):
+    def execute_query(self, query, params=None):
         """Execute a single query and return the results.
 
 :param query: The text of the query.
@@ -116,10 +116,12 @@ MonetDBLite operates.
 """
         cursor = self._connection.cursor()
         try:
-            cursor.execute(query)
+            LOGGER.debug("executing query\n %s\n with parameters\n %s", query, params)
+            cursor.execute(query, params)
             results = cursor.fetchnumpy()
+            LOGGER.debug("results\n %s", results)
         except monetdblite.Error as e:
-            LOGGER.warning("query\n  %s\n failed with message: %s", query, e)
+            LOGGER.warning("query\n  %s\n with parameters\n %s failed with message: %s", query, params, e)
             results = None
 
         return results
@@ -240,6 +242,7 @@ it in CSV form and writes it to a temporary file.
 
         cursor = self._connection.cursor()
         try:
+            LOGGER.debug('Inserting data %s to table %s', data, table)
             cursor.insert(table, data)
         except monetdblite.Error as err:
             LOGGER.error("Did not insert data to %s\nError: %s", table, str(err))

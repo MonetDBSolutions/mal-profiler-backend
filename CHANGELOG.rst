@@ -24,6 +24,9 @@ Changed
   ``fetchnumpy`` call of MonetDBLite
 * Refactored the constructor of ``ProfilerObjectParser`` in order to
   pass one dictionary with the limits.
+* ``DatabaseManager::execute_query`` now accepts an argument that
+  collects parameters for the query. The semantics are identical to
+  ``MonetdbLite::Cursor::execute``.
 
 
 v0.2.0 (2019-01-14)
