@@ -403,9 +403,7 @@ into a MonetDBLite-Python trace database.
 
             return execution_id
         else:
-            raise MalParserError("execution for session {}, tag {} already registered".format(
-                session, tag
-            ))
+            raise exceptions.MalParserError("execution for session {}, tag {} already registered".format(session, tag))
 
 
     def _get_execution_id(self, session, tag):
