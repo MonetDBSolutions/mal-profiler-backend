@@ -9,11 +9,9 @@ import bz2
 import gzip
 import json
 import logging
-import os
 
-from mal_analytics.profiler_parser import ProfilerObjectParser
 from mal_analytics.db_manager import DatabaseManager
-from mal_analytics.exceptions import *
+from mal_analytics import exceptions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -79,7 +77,7 @@ def parse_trace(filename, database_path):  # pragma: no coverage
         for table, data in pob.get_data().items():
             dbm.insert_data(table, data)
         dbm.add_constraints()
-    except AnalyticsException as e:
+    except exceptions.AnalyticsException as e:
         LOGGER.error(e)
         dbm.rollback()
     dbm.commit()

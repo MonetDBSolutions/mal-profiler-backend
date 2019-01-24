@@ -213,29 +213,6 @@ function returns a tuple containing these limits.
 
         return ProfilerObjectParser(self.get_limits())
 
-    def _prepare_csv(self, data):  # pragma: no coverage
-        """Create a CSV file from the given data.
-
-The data should be a homogeneous list of dictionaries, representing
-the tuples to be inserted into the database. This method will package
-it in CSV form and writes it to a temporary file.
-
-:params data: A homogeneous list of dictionaries.
-:returns: The path to the temporary file.
-        """
-
-        fname = tempfile.mktemp()
-        keys = data[0].keys()
-        csv_lines = ""
-        for element in data:
-            csv_lines += "|".join([str(c) for c in element.values()])
-            csv_lines += "\n"
-
-        with open(fname, 'w') as fl:
-            fl.write(csv_lines)
-
-        return fname
-
     def insert_data(self, table, data):
         if not self.is_connected():
             raise DatabaseManagerError("Manager is not connected")
@@ -269,3 +246,26 @@ it in CSV form and writes it to a temporary file.
 
     def rollback(self):  # pragma: no coverage
         self._connection.rollback()
+
+#     def _prepare_csv(self, data):  # pragma: no coverage
+#         """Create a CSV file from the given data.
+
+# The data should be a homogeneous list of dictionaries, representing
+# the tuples to be inserted into the database. This method will package
+# it in CSV form and writes it to a temporary file.
+
+# :params data: A homogeneous list of dictionaries.
+# :returns: The path to the temporary file.
+#         """
+
+#         fname = tempfile.mktemp()
+#         keys = data[0].keys()
+#         csv_lines = ""
+#         for element in data:
+#             csv_lines += "|".join([str(c) for c in element.values()])
+#             csv_lines += "\n"
+
+#         with open(fname, 'w') as fl:
+#             fl.write(csv_lines)
+
+#         return fname

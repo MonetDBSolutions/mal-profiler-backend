@@ -4,7 +4,6 @@
 #
 # Copyright MonetDB Solutions B.V. 2018-2019
 
-import json
 import logging
 import re
 
@@ -419,10 +418,6 @@ into a MonetDBLite-Python trace database.
 This will create a representation ready to be inserted into the
 database.
 '''
-        events = list()
-        variables = list()
-        prerequisite_events = list()
-
         # This is a list that we use for deduplication of variables.
         var_name_list = list()
         execution = -1
@@ -430,8 +425,6 @@ database.
         for json_event in json_stream:
             src = json_event.get("source")
             if src == "trace":
-                prev_execution = execution
-
                 if json_event.get('session') is None:
                     LOGGER.error(json_event)
                     raise exceptions.MalParserError('Missing session')
