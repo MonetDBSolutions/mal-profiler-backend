@@ -37,7 +37,7 @@ into a MonetDBLite-Python trace database.
         self._heartbeat_id = limits.get('max_heartbeat_id', 0)
         self._prerequisite_relation_id = limits.get('max_prerequisite_id', 0)
         self._query_id = limits.get('max_query_id', 0)
-        self._supervises_executions_id = limits.get('max_supervises_id', 0)
+        self._initiates_executions_id = limits.get('max_initiates_id', 0)
 
         self._supervisor_association = dict()
         self._var_name_to_id = dict()
@@ -133,20 +133,20 @@ into a MonetDBLite-Python trace database.
             "variable_id": list(),
         }
 
-        # BUG: If I remove query_text or supervisor_execution_id
+        # BUG: If I remove query_text or root_execution_id
         # test_limits_full_db coredumps on manager.insert_data
         # (monetdblite.insert?).
         self._query = {
             "query_id": list(),
             "query_text": list(),
             "query_label": list(),
-            "supervisor_execution_id": list(),
+            "root_execution_id": list(),
         }
 
-        self._supervises_executions = {
-            "supervises_executions_id": list(),
-            "supervisor_id": list(),
-            "worker_id": list(),
+        self._initiates_executions = {
+            "initiates_executions_id": list(),
+            "parent_id": list(),
+            "child_id": list(),
         }
 
         self._heartbeats = {
@@ -292,23 +292,23 @@ into a MonetDBLite-Python trace database.
                 })
 
         query_data = None
-        supervises_executions_data = list()
+        initiates_executions_data = list()
         if event_data['mal_module'] == 'querylog' and event_data['instruction'] == 'define' and event_data['execution_state'] == 0:
             self._query_id += 1
             query_data = {
                 "query_id": self._query_id,
                 "query_text": self._parse_query_text(event_data['short_statement']),  # TODO: find the value of the variable with index=1
                 "query_label": None,
-                "supervisor_execution_id": event_data['mal_execution_id']
+                "root_execution_id": event_data['mal_execution_id']
             }
             LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
             # An execution with a call to querylog.define supervises
             # itself
-            self._supervises_executions_id += 1
-            supervises_executions_data.append({
-                "supervises_executions_id": self._supervises_executions_id,
-                "supervisor_id": current_execution_id,
-                "worker_id": current_execution_id
+            self._initiates_executions_id += 1
+            initiates_executions_data.append({
+                "initiates_executions_id": self._initiates_executions_id,
+                "parent_id": current_execution_id,
+                "child_id": current_execution_id
             })
         elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' and event_data['execution_state'] == 0:
             # In queries over remote tables the plan is split in
@@ -344,11 +344,11 @@ into a MonetDBLite-Python trace database.
                 # before. If yes we can resolve the data to insert
                 # into the table.
                 if worker_uuid in self._supervisor_association:
-                    self._supervises_executions_id += 1
-                    supervises_executions_data.append({
-                        "supervises_executions_id": self._supervises_executions_id,
-                        "supervisor_id": current_execution_id,
-                        "worker_id": self._supervisor_association[worker_uuid],
+                    self._initiates_executions_id += 1
+                    initiates_executions_data.append({
+                        "initiates_executions_id": self._initiates_executions_id,
+                        "parent_id": current_execution_id,
+                        "child_id": self._supervisor_association[worker_uuid],
                     })
                     del self._supervisor_association[worker_uuid]
                 else:
@@ -363,11 +363,11 @@ into a MonetDBLite-Python trace database.
                 # First search if we have encountered the supervisor UUID
                 # before. If yes we can resolve the data.
                 if worker_uuid in self._supervisor_association:
-                    self._supervises_executions_id += 1
-                    supervises_executions_data.append({
-                        "supervises_executions_id": self._supervises_executions_id,
-                        "supervisor_id": self._supervisor_association[worker_uuid],
-                        "worker_id": current_execution_id,
+                    self._initiates_executions_id += 1
+                    initiates_executions_data.append({
+                        "initiates_executions_id": self._initiates_executions_id,
+                        "parent_id": self._supervisor_association[worker_uuid],
+                        "child_id": current_execution_id,
                     })
                     del self._supervisor_association[worker_uuid]
                 else:
@@ -381,7 +381,7 @@ into a MonetDBLite-Python trace database.
             referenced_vars,
             event_variables,
             query_data,
-            supervises_executions_data
+            initiates_executions_data
         )
 
     def _set_execution_id(self, session, tag, user_function, server_version=None):
@@ -432,7 +432,7 @@ database.
                     LOGGER.error(json_event)
                     raise exceptions.MalParserError('Missing tag')
 
-                event_data, prereq_list, referenced_vars, event_variables, query_data, supervises_executions_data = self._parse_event(json_event)
+                event_data, prereq_list, referenced_vars, event_variables, query_data, initiates_executions_data = self._parse_event(json_event)
                 execution = self._get_execution_id(json_event.get('session'), json_event.get('tag'))
                 event_data['mal_execution_id'] = execution
                 # events.append(event_data)
@@ -484,14 +484,14 @@ database.
                     for k, v in query_data.items():
                         self._query.get(k).append(v)
 
-                if supervises_executions_data is not None:
-                    for i in supervises_executions_data:
+                if initiates_executions_data is not None:
+                    for i in initiates_executions_data:
                         for k, v in i.items():
-                            self._supervises_executions.get(k).append(v)
+                            self._initiates_executions.get(k).append(v)
 
                 cnt += 1
         LOGGER.debug("%d JSON objects parsed", cnt)
-        LOGGER.debug("supervises executions = %s", self._supervises_executions)
+        LOGGER.debug("initiates executions = %s", self._initiates_executions)
 
     def _parse_heartbeat(self, json_object):
         '''Parse a heartbeat object and adds it to the database.
@@ -618,7 +618,7 @@ The data is ready to be inserted into MonetDBLite.
             "mal_variable": self._variables,
             "event_variable_list": self._event_variables,
             "query": self._query,
-            "supervises_executions": self._supervises_executions,
+            "initiates_executions": self._initiates_executions,
             "heartbeat": self._heartbeats,
             "cpuload": self._cpuloads
         }

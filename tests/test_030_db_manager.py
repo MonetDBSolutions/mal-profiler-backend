@@ -63,7 +63,7 @@ class TestDatabaseManager(object):
             'max_heartbeat_id': 0,
             'max_prerequisite_id': 2474,
             'max_query_id': 1,
-            'max_supervises_id': 1,
+            'max_initiates_id': 1,
         }
         limits = manager_object.get_limits()
         for k, v in truth.items():

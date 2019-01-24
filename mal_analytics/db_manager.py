@@ -68,7 +68,7 @@ MonetDBLite operates.
             'mal_variable',
             'event_variable_list',
             'query',
-            'supervises_executions',
+            'initiates_executions',
             'heartbeat',
             'cpuload'
         ]
@@ -197,11 +197,11 @@ function returns a tuple containing these limits.
             {'id_column': 'heartbeat_id', 'alias': 'max_heartbeat_id', 'table': 'heartbeat'},
             {'id_column': 'prerequisite_relation_id', 'alias': 'max_prerequisite_id', 'table': 'prerequisite_events'},
             {'id_column': 'query_id', 'alias': 'max_query_id', 'table': 'query'},
-            {'id_column': 'supervises_executions_id', 'alias': 'max_supervises_id', 'table': 'supervises_executions'},
+            {'id_column': 'initiates_executions_id', 'alias': 'max_initiates_id', 'table': 'initiates_executions'},
         ]
 
         results = dict([(x['alias'], self.execute_query(query_template.format(**x))[x['alias']][0] or 0) for x in queries])
-        print(results)
+        LOGGER.debug(results)
 
         return results
 
