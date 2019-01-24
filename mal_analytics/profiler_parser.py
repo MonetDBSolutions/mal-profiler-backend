@@ -147,6 +147,7 @@ into a MonetDBLite-Python trace database.
             "initiates_executions_id": list(),
             "parent_id": list(),
             "child_id": list(),
+            "remote": list ()
         }
 
         self._heartbeats = {
@@ -308,7 +309,8 @@ into a MonetDBLite-Python trace database.
             initiates_executions_data.append({
                 "initiates_executions_id": self._initiates_executions_id,
                 "parent_id": current_execution_id,
-                "child_id": current_execution_id
+                "child_id": current_execution_id,
+                "remote": False,
             })
         elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' and event_data['execution_state'] == 0:
             # In queries over remote tables the plan is split in
@@ -349,6 +351,7 @@ into a MonetDBLite-Python trace database.
                         "initiates_executions_id": self._initiates_executions_id,
                         "parent_id": current_execution_id,
                         "child_id": self._supervisor_association[worker_uuid],
+                        "remote": True,
                     })
                     del self._supervisor_association[worker_uuid]
                 else:
@@ -368,6 +371,7 @@ into a MonetDBLite-Python trace database.
                         "initiates_executions_id": self._initiates_executions_id,
                         "parent_id": self._supervisor_association[worker_uuid],
                         "child_id": current_execution_id,
+                        "remote": True,
                     })
                     del self._supervisor_association[worker_uuid]
                 else:

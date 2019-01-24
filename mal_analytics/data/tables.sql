@@ -104,6 +104,7 @@ create table initiates_executions (
        initiates_executions_id bigint,
        parent_id bigint,
        child_id bigint,
+       "remote" bool not null,
 
        constraint pk_initiates_executions primary key (initiates_executions_id),
        constraint fk_parent_id foreign key (parent_id) references mal_execution(execution_id),

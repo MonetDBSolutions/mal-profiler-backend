@@ -245,7 +245,8 @@ class TestParser(object):
             "initiates_executions": [
                 "initiates_executions_id",
                 "parent_id",
-                "child_id"
+                "child_id",
+                "remote"
             ],
             "heartbeat": [
                 "heartbeat_id",
