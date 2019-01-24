@@ -39,7 +39,7 @@ into a MonetDBLite-Python trace database.
         self._query_id = limits.get('max_query_id', 0)
         self._initiates_executions_id = limits.get('max_initiates_id', 0)
 
-        self._supervisor_association = dict()
+        self._initiates_association = dict()
         self._var_name_to_id = dict()
         self._execution_dict = dict()
         self._states = {'start': 0, 'done': 1, 'pause': 2}
@@ -295,89 +295,11 @@ into a MonetDBLite-Python trace database.
         query_data = None
         initiates_executions_data = list()
         if event_data['mal_module'] == 'querylog' and event_data['instruction'] == 'define' and event_data['execution_state'] == 0:
-            self._query_id += 1
-            query_data = {
-                "query_id": self._query_id,
-                "query_text": self._parse_query_text(event_data['short_statement']),  # TODO: find the value of the variable with index=1
-                "query_label": None,
-                "root_execution_id": event_data['mal_execution_id']
-            }
-            LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
-            # An execution with a call to querylog.define supervises
-            # itself
-            self._initiates_executions_id += 1
-            initiates_executions_data.append({
-                "initiates_executions_id": self._initiates_executions_id,
-                "parent_id": current_execution_id,
-                "child_id": current_execution_id,
-                "remote": False,
-            })
+            query_data, new_initiates_relations = self._register_new_query(event_data, current_execution_id)
+            initiates_executions_data.extend(new_initiates_relations)
+
         elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' and event_data['execution_state'] == 0:
-            # In queries over remote tables the plan is split in
-            # several executions. One of these is the supervisor
-            # execution that orchestrates the worker executions. The
-            # server emmits a call to the remote.register_supervisor
-            # MAL instruction in all of these plans. This instruction
-            # is effectively a noop. The idea is to associate the
-            # supervisor execution with the workers in a systematic
-            # way.
-
-            # Right now (December 2018) register_supervisor takes two
-            # arguments:
-            # 1. The primary execution session UUID
-            # 2. One UUID, unique for each worker execution
-
-            # Since the call to register_supervisor exists in both the
-            # supervisor and the worker plan with the same argumens,
-            # we can associate the two executions uniquely.
-
-            # First get the arguments of the register_supervisor call
-            for v in referenced_vars.values():
-                if v['list_index'] == 1:
-                    supervisor_session = v['mal_value'][1:-1]
-                elif v['list_index'] == 2:
-                    worker_uuid = v['mal_value'][1:-1]
-
-            if json_object.get('session') == supervisor_session:
-                # If we are at the supervisor execution we can find
-                # the supervisor execution id.
-
-                # First search if we have encountered the worker UUID
-                # before. If yes we can resolve the data to insert
-                # into the table.
-                if worker_uuid in self._supervisor_association:
-                    self._initiates_executions_id += 1
-                    initiates_executions_data.append({
-                        "initiates_executions_id": self._initiates_executions_id,
-                        "parent_id": current_execution_id,
-                        "child_id": self._supervisor_association[worker_uuid],
-                        "remote": True,
-                    })
-                    del self._supervisor_association[worker_uuid]
-                else:
-                    # The worker UUID is not there. Make a note of the
-                    # association so that we are able to resolve the
-                    # data supervises_executions table when we
-                    # encounter the corresponding worker node.
-                    self._supervisor_association[worker_uuid] = current_execution_id
-            else:
-                # We are at the worker execution.
-
-                # First search if we have encountered the supervisor UUID
-                # before. If yes we can resolve the data.
-                if worker_uuid in self._supervisor_association:
-                    self._initiates_executions_id += 1
-                    initiates_executions_data.append({
-                        "initiates_executions_id": self._initiates_executions_id,
-                        "parent_id": self._supervisor_association[worker_uuid],
-                        "child_id": current_execution_id,
-                        "remote": True,
-                    })
-                    del self._supervisor_association[worker_uuid]
-                else:
-                    # Make a note of the association so that we are
-                    # able to resolve the data later.
-                    self._supervisor_association[worker_uuid] = current_execution_id
+            self._handle_remote_initiates(json_object, referenced_vars, current_execution_id, initiates_executions_data)
 
         return (
             event_data,
@@ -408,6 +330,94 @@ into a MonetDBLite-Python trace database.
         else:
             raise exceptions.MalParserError("execution for session {}, tag {} already registered".format(session, tag))
 
+    def _register_new_query(self, event_data, current_execution_id):
+        initiates_executions_data = list()
+        self._query_id += 1
+        query_data = {
+            "query_id": self._query_id,
+            "query_text": self._parse_query_text(event_data['short_statement']),  # TODO: find the value of the variable with index=1
+            "query_label": None,
+            "root_execution_id": event_data['mal_execution_id']
+        }
+        LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
+        # An execution with a call to querylog.define supervises
+        # itself
+        self._initiates_executions_id += 1
+        initiates_executions_data.append({
+            "initiates_executions_id": self._initiates_executions_id,
+            "parent_id": current_execution_id,
+            "child_id": current_execution_id,
+            "remote": False,
+        })
+
+        return (query_data, initiates_executions_data)
+
+    def _handle_remote_initiates(self, json_object, referenced_vars, current_execution_id, initiates_executions_data):
+        # In queries over remote tables the plan is split in
+        # several executions. One of these is the supervisor
+        # execution that orchestrates the worker executions. The
+        # server emmits a call to the remote.register_supervisor
+        # MAL instruction in all of these plans. This instruction
+        # is effectively a noop. The idea is to associate the
+        # supervisor execution with the workers in a systematic
+        # way.
+
+        # Right now (December 2018) register_supervisor takes two
+        # arguments:
+        # 1. The primary execution session UUID
+        # 2. One UUID, unique for each worker execution
+
+        # Since the call to register_supervisor exists in both the
+        # supervisor and the worker plan with the same argumens,
+        # we can associate the two executions uniquely.
+
+        # First get the arguments of the register_supervisor call
+        for v in referenced_vars.values():
+            if v['list_index'] == 1:
+                supervisor_session = v['mal_value'][1:-1]
+            elif v['list_index'] == 2:
+                worker_uuid = v['mal_value'][1:-1]
+
+        if json_object.get('session') == supervisor_session:
+            # If we are at the supervisor execution we can find
+            # the supervisor execution id.
+
+            # First search if we have encountered the worker UUID
+            # before. If yes we can resolve the data to insert
+            # into the table.
+            if worker_uuid in self._initiates_association:
+                self._initiates_executions_id += 1
+                initiates_executions_data.append({
+                    "initiates_executions_id": self._initiates_executions_id,
+                    "parent_id": current_execution_id,
+                    "child_id": self._initiates_association[worker_uuid],
+                    "remote": True,
+                })
+                del self._initiates_association[worker_uuid]
+            else:
+                # The worker UUID is not there. Make a note of the
+                # association so that we are able to resolve the
+                # data supervises_executions table when we
+                # encounter the corresponding worker node.
+                self._initiates_association[worker_uuid] = current_execution_id
+        else:
+            # We are at the worker execution.
+
+            # First search if we have encountered the supervisor UUID
+            # before. If yes we can resolve the data.
+            if worker_uuid in self._initiates_association:
+                self._initiates_executions_id += 1
+                initiates_executions_data.append({
+                    "initiates_executions_id": self._initiates_executions_id,
+                    "parent_id": self._initiates_association[worker_uuid],
+                    "child_id": current_execution_id,
+                    "remote": True,
+                })
+                del self._initiates_association[worker_uuid]
+            else:
+                # Make a note of the association so that we are
+                # able to resolve the data later.
+                self._initiates_association[worker_uuid] = current_execution_id
 
     def _get_execution_id(self, session, tag):
         '''Return the (local) execution id for the given session and tag
@@ -612,9 +622,9 @@ The data is ready to be inserted into MonetDBLite.
           + val
 
         """
-        if len(self._supervisor_association) > 0:
+        if len(self._initiates_association) > 0:
             LOGGER.debug("supervisor association table not empty: %s",
-                         self._supervisor_association)
+                         self._initiates_association)
         return {
             "mal_execution": self._executions,
             "profiler_event": self._events,
