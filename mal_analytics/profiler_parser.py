@@ -300,6 +300,9 @@ into a MonetDBLite-Python trace database.
 
         elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' and event_data['execution_state'] == 0:
             self._handle_remote_initiates(json_object, referenced_vars, current_execution_id, initiates_executions_data)
+        elif event_data['mal_module'] == 'user' and event_data['execution_state'] == 0:
+            LOGGER.debug("event data['instruction'] = %s event_data['short_statement'] = %s current execution = %d", event_data.get('instruction'), event_data.get('short_statement'), current_execution_id)
+            self._handle_local_initiates(event_data, current_execution_id, initiates_executions_data)
 
         return (
             event_data,
@@ -329,6 +332,45 @@ into a MonetDBLite-Python trace database.
             return execution_id
         else:
             raise exceptions.MalParserError("execution for session {}, tag {} already registered".format(session, tag))
+
+    def _handle_local_initiates(self, event_data, current_execution_id, initiates_executions_data):
+        idx = self._executions["execution_id"].index(current_execution_id)
+        server_session = self._executions["server_session"][idx]
+
+        # We are concatenating the server_session with the function
+        # name. We are assuming that the function calls are local
+        # within a server session. For the remote case we need to
+        # detect the register_supervisor call.
+        key = "{}:{}".format(server_session, event_data["instruction"])
+
+        # We are defining a function
+        if event_data['short_statement'].startswith('function'):
+            # the check should take into account all the information that make this execution unique
+            if key in self._initiates_association:
+                self._initiates_executions_id += 1
+                initiates_executions_data.append({
+                    "initiates_executions_id": self._initiates_executions_id,
+                    "parent_id": self._initiates_association[key],
+                    "child_id": current_execution_id,
+                    "remote": False,
+                })
+                del self._initiates_association[key]
+            else:
+                self._initiates_association[key] = current_execution_id
+        else:
+            # We are calling a function
+            if key in self._initiates_association:
+                self._initiates_executions_id += 1
+                initiates_executions_data.append ({
+                    "initiates_executions_id": self._initiates_executions_id,
+                    "parent_id": current_execution_id,
+                    "child_id": self._initiates_association[key],
+                    "remote": False,
+                })
+                del self._initiates_association[key]
+            else:
+                self._initiates_association[key] = current_execution_id
+                
 
     def _register_new_query(self, event_data, current_execution_id):
         initiates_executions_data = list()
