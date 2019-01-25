@@ -119,9 +119,11 @@ MonetDBLite operates.
             LOGGER.debug("executing query\n %s\n with parameters\n %s", query, params)
             cursor.execute(query, params)
             results = cursor.fetchnumpy()
-            LOGGER.debug("results\n %s", results)
+            # TODO: consider adding verbosity parameter
+            # LOGGER.debug("results\n %s", results)
         except monetdblite.Error as e:
             LOGGER.warning("query\n  %s\n with parameters\n %s failed with message: %s", query, params, e)
+            # TODO: consider raising an exception
             results = None
 
         return results
@@ -219,7 +221,8 @@ function returns a tuple containing these limits.
 
         cursor = self._connection.cursor()
         try:
-            LOGGER.debug('Inserting data %s to table %s', data, table)
+            # TODO: consider verbosity debug level
+            # LOGGER.debug('Inserting data %s to table %s', data, table)
             cursor.insert(table, data)
         except monetdblite.Error as err:
             LOGGER.error("Did not insert data to %s\nError: %s", table, str(err))
