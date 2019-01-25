@@ -301,7 +301,7 @@ into a MonetDBLite-Python trace database.
         elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' and event_data['execution_state'] == 0:
             self._handle_remote_initiates(json_object, referenced_vars, current_execution_id, initiates_executions_data)
         elif event_data['mal_module'] == 'user' and event_data['execution_state'] == 0:
-            LOGGER.debug("event data['instruction'] = %s event_data['short_statement'] = %s current execution = %d", event_data.get('instruction'), event_data.get('short_statement'), current_execution_id)
+            LOGGER.debug("\n  event data['instruction'] = %s\n  event_data['short_statement'] = %s\n  current execution = %d", event_data.get('instruction'), event_data.get('short_statement'), current_execution_id)
             self._handle_local_initiates(event_data, current_execution_id, initiates_executions_data)
 
         return (
@@ -343,33 +343,42 @@ into a MonetDBLite-Python trace database.
         # detect the register_supervisor call.
         key = "{}:{}".format(server_session, event_data["instruction"])
 
-        # We are defining a function
+        # We are defining a function...
         if event_data['short_statement'].startswith('function'):
-            # the check should take into account all the information that make this execution unique
-            if key in self._initiates_association:
+            LOGGER.debug("Defining")
+            lookup_key = key + ":c"  # ...so we look up the *call* of the function
+            if lookup_key in self._initiates_association:
+                LOGGER.debug("  Resolving key %s", key)
                 self._initiates_executions_id += 1
                 initiates_executions_data.append({
                     "initiates_executions_id": self._initiates_executions_id,
-                    "parent_id": self._initiates_association[key],
+                    "parent_id": self._initiates_association[lookup_key],
                     "child_id": current_execution_id,
                     "remote": False,
                 })
-                del self._initiates_association[key]
+                del self._initiates_association[lookup_key]
             else:
-                self._initiates_association[key] = current_execution_id
+                LOGGER.debug("  Recording key %s", key)
+                record_key = key + ":d"
+                self._initiates_association[record_key] = current_execution_id
         else:
-            # We are calling a function
-            if key in self._initiates_association:
+            # We are calling a function...
+            LOGGER.debug("Calling")
+            lookup_key = key + ":d"  # ...so we look up the *definition* of the function
+            if lookup_key in self._initiates_association:
+                LOGGER.debug("  Resolving key %s", key)
                 self._initiates_executions_id += 1
                 initiates_executions_data.append ({
                     "initiates_executions_id": self._initiates_executions_id,
                     "parent_id": current_execution_id,
-                    "child_id": self._initiates_association[key],
+                    "child_id": self._initiates_association[lookup_key],
                     "remote": False,
                 })
-                del self._initiates_association[key]
+                del self._initiates_association[lookup_key]
             else:
-                self._initiates_association[key] = current_execution_id
+                LOGGER.debug("  Recording key %s", key)
+                record_key = key + ":c"
+                self._initiates_association[record_key] = current_execution_id
                 
 
     def _register_new_query(self, event_data, current_execution_id):
@@ -665,8 +674,7 @@ The data is ready to be inserted into MonetDBLite.
 
         """
         if len(self._initiates_association) > 0:
-            LOGGER.debug("supervisor association table not empty: %s",
-                         self._initiates_association)
+            LOGGER.warning("supervisor association table not empty: %s", self._initiates_association)
         return {
             "mal_execution": self._executions,
             "profiler_event": self._events,

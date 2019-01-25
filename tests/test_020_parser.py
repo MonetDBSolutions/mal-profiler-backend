@@ -323,7 +323,7 @@ class TestParser(object):
             "mal_variable": 88,
             "event_variable_list": 344,
             "query": 1,
-            "initiates_executions": 1,
+            "initiates_executions": 3,
             "heartbeat": 0,
             "cpuload": 0
         }
@@ -345,7 +345,7 @@ class TestParser(object):
             "mal_variable": 182,
             "event_variable_list": 564,
             "query": 1,
-            "initiates_executions": 3,
+            "initiates_executions": 7,
             "heartbeat": 0,
             "cpuload": 0
         }
@@ -368,7 +368,7 @@ class TestParser(object):
             "mal_variable": 182,
             "event_variable_list": 564,
             "query": 1,
-            "initiates_executions": 3,
+            "initiates_executions": 7,
             "heartbeat": 0,
             "cpuload": 0
         }
