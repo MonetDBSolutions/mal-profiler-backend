@@ -94,20 +94,21 @@ create table query (
        query_id bigint,
        query_text text,
        query_label text,
-       supervisor_execution_id bigint,
+       root_execution_id bigint,
 
        constraint pk_query primary key (query_id),
-       constraint fk_supervisor_execution_id foreign key (supervisor_execution_id) references mal_execution(execution_id)
+       constraint fk_root_execution_id foreign key (root_execution_id) references mal_execution(execution_id)
 );
 
-create table supervises_executions (
-       supervises_executions_id bigint,
-       supervisor_id bigint,
-       worker_id bigint,
+create table initiates_executions (
+       initiates_executions_id bigint,
+       parent_id bigint,
+       child_id bigint,
+       "remote" bool not null,
 
-       constraint pk_supervises_executions primary key (supervises_executions_id),
-       constraint fk_supervisor_id foreign key (supervisor_id) references mal_execution(execution_id),
-       constraint fk_worker_id foreign key (supervisor_id) references mal_execution(execution_id)
+       constraint pk_initiates_executions primary key (initiates_executions_id),
+       constraint fk_parent_id foreign key (parent_id) references mal_execution(execution_id),
+       constraint fk_child_id foreign key (child_id) references mal_execution(execution_id)
 );
 
 create table heartbeat (

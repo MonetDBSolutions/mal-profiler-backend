@@ -45,7 +45,7 @@ class TestParser(object):
         json_input_str = """{"version":"11.32.0 (hg id: 903396fca5 (git))","source":"trace","clk":27720582,"ctime":1543501117800118,"thread":44,"function":"user.s0_1","pc":2027,"tag":9,"module":"algebra","instruction":"thetaselect","session":"cd31712f-032b-486e-86c4-f6f445d1394d","state":"start","usec":0,"rss":101,"size":0,"stmt":"C_2622=nil:bat[:oid] := algebra.thetaselect(X_2373=<tmp_544>[100020]:bat[:date], C_394=<tmp_272>[100020]:bat[:oid], \\\"1992-12-11\\\":date, \\\"<=\\\":str);","short":"C_2622[0]:= thetaselect( X_2373[100020], C_394[100020], 1992-12-11, \\\"<=\\\" )","prereq":[2025,2026],"ret":[{"index":0,"name":"C_2622","alias":"sys.lineitem.l_shipdate","type":"bat[:oid]","bid":0,"count":0,"size":0,"eol":0}],"arg":[{"index":1,"name":"X_2373","alias":"sys.lineitem.l_shipdate","type":"bat[:date]","view":"true","parent":798,"seqbase":5601120,"hghbase":5701140,"kind":"persistent","bid":356,"count":100020,"size":400080,"eol":1},{"index":2,"name":"C_394","type":"bat[:oid]","kind":"transient","bid":186,"count":100020,"size":0,"eol":1},{"index":3,"name":"X_262","type":"date","value":"1992-12-11","eol":0},{"index":4,"name":"X_69","type":"str","value":"\\\"<=\\\"","eol":0}]}"""
         json_input = json.loads(json_input_str)
 
-        event_data, prereq_list, variables, event_variables, query_data, supervises_executions_data = parser_object._parse_event(json_input)
+        event_data, prereq_list, variables, event_variables, query_data, initiates_executions_data = parser_object._parse_event(json_input)
         event_data_truth = {
             "event_id": 1,
             "mal_execution_id": 1,
@@ -240,12 +240,13 @@ class TestParser(object):
                 "query_id",
                 "query_text",
                 "query_label",
-                "supervisor_execution_id"
+                "root_execution_id"
             ],
-            "supervises_executions": [
-                "supervises_executions_id",
-                "supervisor_id",
-                "worker_id"
+            "initiates_executions": [
+                "initiates_executions_id",
+                "parent_id",
+                "child_id",
+                "remote"
             ],
             "heartbeat": [
                 "heartbeat_id",
@@ -278,7 +279,7 @@ class TestParser(object):
             "mal_variable": 865,
             "event_variable_list": 5636,
             "query": 1,
-            "supervises_executions": 1,
+            "initiates_executions": 1,
             "heartbeat": 0,
             "cpuload": 0
         }
@@ -299,7 +300,7 @@ class TestParser(object):
             "mal_variable": 1886,
             "event_variable_list": 13418,
             "query": 2,
-            "supervises_executions": 2,
+            "initiates_executions": 2,
             "heartbeat": 0,
             "cpuload": 0
         }
@@ -322,7 +323,7 @@ class TestParser(object):
             "mal_variable": 88,
             "event_variable_list": 344,
             "query": 1,
-            "supervises_executions": 1,
+            "initiates_executions": 3,
             "heartbeat": 0,
             "cpuload": 0
         }
@@ -344,7 +345,7 @@ class TestParser(object):
             "mal_variable": 182,
             "event_variable_list": 564,
             "query": 1,
-            "supervises_executions": 3,
+            "initiates_executions": 7,
             "heartbeat": 0,
             "cpuload": 0
         }
@@ -359,6 +360,28 @@ class TestParser(object):
             for field in result[table]:
                 assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
 
+    def test_parse_distributed_traces_worker_first(self, parser_object, supervisor_trace, worker1_trace, worker2_trace):
+        truth = {
+            "mal_execution": 33,
+            "profiler_event": 280,
+            "prerequisite_events": 142,
+            "mal_variable": 182,
+            "event_variable_list": 564,
+            "query": 1,
+            "initiates_executions": 7,
+            "heartbeat": 0,
+            "cpuload": 0
+        }
+        parser_object.parse_trace_stream(worker1_trace)
+        parser_object.parse_trace_stream(supervisor_trace)
+        parser_object.parse_trace_stream(worker2_trace)
+
+        result = parser_object.get_data()
+        assert len(result) == len(truth)
+
+        for table in result:
+            for field in result[table]:
+                assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
     def test_clear_data(self, parser_object, query_trace1):
         parser_object.parse_trace_stream(query_trace1)
         parser_object.clear_internal_state()

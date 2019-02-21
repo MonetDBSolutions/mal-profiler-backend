@@ -68,7 +68,7 @@ MonetDBLite operates.
             'mal_variable',
             'event_variable_list',
             'query',
-            'supervises_executions',
+            'initiates_executions',
             'heartbeat',
             'cpuload'
         ]
@@ -119,9 +119,11 @@ MonetDBLite operates.
             LOGGER.debug("executing query\n %s\n with parameters\n %s", query, params)
             cursor.execute(query, params)
             results = cursor.fetchnumpy()
-            LOGGER.debug("results\n %s", results)
+            # TODO: consider adding verbosity parameter
+            # LOGGER.debug("results\n %s", results)
         except monetdblite.Error as e:
             LOGGER.warning("query\n  %s\n with parameters\n %s failed with message: %s", query, params, e)
+            # TODO: consider raising an exception
             results = None
 
         return results
@@ -197,11 +199,11 @@ function returns a tuple containing these limits.
             {'id_column': 'heartbeat_id', 'alias': 'max_heartbeat_id', 'table': 'heartbeat'},
             {'id_column': 'prerequisite_relation_id', 'alias': 'max_prerequisite_id', 'table': 'prerequisite_events'},
             {'id_column': 'query_id', 'alias': 'max_query_id', 'table': 'query'},
-            {'id_column': 'supervises_executions_id', 'alias': 'max_supervises_id', 'table': 'supervises_executions'},
+            {'id_column': 'initiates_executions_id', 'alias': 'max_initiates_id', 'table': 'initiates_executions'},
         ]
 
         results = dict([(x['alias'], self.execute_query(query_template.format(**x))[x['alias']][0] or 0) for x in queries])
-        print(results)
+        LOGGER.debug(results)
 
         return results
 
@@ -213,36 +215,14 @@ function returns a tuple containing these limits.
 
         return ProfilerObjectParser(self.get_limits())
 
-    def _prepare_csv(self, data):  # pragma: no coverage
-        """Create a CSV file from the given data.
-
-The data should be a homogeneous list of dictionaries, representing
-the tuples to be inserted into the database. This method will package
-it in CSV form and writes it to a temporary file.
-
-:params data: A homogeneous list of dictionaries.
-:returns: The path to the temporary file.
-        """
-
-        fname = tempfile.mktemp()
-        keys = data[0].keys()
-        csv_lines = ""
-        for element in data:
-            csv_lines += "|".join([str(c) for c in element.values()])
-            csv_lines += "\n"
-
-        with open(fname, 'w') as fl:
-            fl.write(csv_lines)
-
-        return fname
-
     def insert_data(self, table, data):
         if not self.is_connected():
             raise DatabaseManagerError("Manager is not connected")
 
         cursor = self._connection.cursor()
         try:
-            LOGGER.debug('Inserting data %s to table %s', data, table)
+            # TODO: consider verbosity debug level
+            # LOGGER.debug('Inserting data %s to table %s', data, table)
             cursor.insert(table, data)
         except monetdblite.Error as err:
             LOGGER.error("Did not insert data to %s\nError: %s", table, str(err))
@@ -269,3 +249,26 @@ it in CSV form and writes it to a temporary file.
 
     def rollback(self):  # pragma: no coverage
         self._connection.rollback()
+
+#     def _prepare_csv(self, data):  # pragma: no coverage
+#         """Create a CSV file from the given data.
+
+# The data should be a homogeneous list of dictionaries, representing
+# the tuples to be inserted into the database. This method will package
+# it in CSV form and writes it to a temporary file.
+
+# :params data: A homogeneous list of dictionaries.
+# :returns: The path to the temporary file.
+#         """
+
+#         fname = tempfile.mktemp()
+#         keys = data[0].keys()
+#         csv_lines = ""
+#         for element in data:
+#             csv_lines += "|".join([str(c) for c in element.values()])
+#             csv_lines += "\n"
+
+#         with open(fname, 'w') as fl:
+#             fl.write(csv_lines)
+
+#         return fname

@@ -45,14 +45,14 @@ ALTER TABLE event_variable_list ADD
 ALTER TABLE query ADD
     CONSTRAINT pk_query PRIMARY KEY (query_id);
 ALTER TABLE query ADD
-    CONSTRAINT fk_supervisor_execution_id FOREIGN KEY (supervisor_execution_id) REFERENCES mal_execution(execution_id);
+    CONSTRAINT fk_root_execution_id FOREIGN KEY (root_execution_id) REFERENCES mal_execution(execution_id);
 
-ALTER TABLE supervises_executions ADD
-    CONSTRAINT pk_supervises_executions PRIMARY KEY (supervises_executions_id);
-ALTER TABLE supervises_executions ADD
-    CONSTRAINT fk_supervisor_id FOREIGN KEY (supervisor_id) REFERENCES mal_execution(execution_id);
-ALTER TABLE supervises_executions ADD
-    CONSTRAINT fk_worker_id FOREIGN KEY (supervisor_id) REFERENCES mal_execution(execution_id);
+ALTER TABLE initiates_executions ADD
+    CONSTRAINT pk_initiates_executions PRIMARY KEY (initiates_executions_id);
+ALTER TABLE initiates_executions ADD
+    CONSTRAINT fk_parent_id FOREIGN KEY (parent_id) REFERENCES mal_execution(execution_id);
+ALTER TABLE initiates_executions ADD
+    CONSTRAINT fk_child_id FOREIGN KEY (child_id) REFERENCES mal_execution(execution_id);
 
 ALTER TABLE heartbeat ADD
     CONSTRAINT pk_heartbeat PRIMARY KEY (heartbeat_id);

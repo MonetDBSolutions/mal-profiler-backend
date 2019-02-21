@@ -4,7 +4,6 @@
 #
 # Copyright MonetDB Solutions B.V. 2018-2019
 
-import json
 import logging
 import re
 
@@ -38,9 +37,9 @@ into a MonetDBLite-Python trace database.
         self._heartbeat_id = limits.get('max_heartbeat_id', 0)
         self._prerequisite_relation_id = limits.get('max_prerequisite_id', 0)
         self._query_id = limits.get('max_query_id', 0)
-        self._supervises_executions_id = limits.get('max_supervises_id', 0)
+        self._initiates_executions_id = limits.get('max_initiates_id', 0)
 
-        self._supervisor_association = dict()
+        self._initiates_association = dict()
         self._var_name_to_id = dict()
         self._execution_dict = dict()
         self._states = {'start': 0, 'done': 1, 'pause': 2}
@@ -134,20 +133,21 @@ into a MonetDBLite-Python trace database.
             "variable_id": list(),
         }
 
-        # BUG: If I remove query_text or supervisor_execution_id
+        # BUG: If I remove query_text or root_execution_id
         # test_limits_full_db coredumps on manager.insert_data
         # (monetdblite.insert?).
         self._query = {
             "query_id": list(),
             "query_text": list(),
             "query_label": list(),
-            "supervisor_execution_id": list(),
+            "root_execution_id": list(),
         }
 
-        self._supervises_executions = {
-            "supervises_executions_id": list(),
-            "supervisor_id": list(),
-            "worker_id": list(),
+        self._initiates_executions = {
+            "initiates_executions_id": list(),
+            "parent_id": list(),
+            "child_id": list(),
+            "remote": list ()
         }
 
         self._heartbeats = {
@@ -293,88 +293,16 @@ into a MonetDBLite-Python trace database.
                 })
 
         query_data = None
-        supervises_executions_data = list()
+        initiates_executions_data = list()
         if event_data['mal_module'] == 'querylog' and event_data['instruction'] == 'define' and event_data['execution_state'] == 0:
-            self._query_id += 1
-            query_data = {
-                "query_id": self._query_id,
-                "query_text": self._parse_query_text(event_data['short_statement']),  # TODO: find the value of the variable with index=1
-                "query_label": None,
-                "supervisor_execution_id": event_data['mal_execution_id']
-            }
-            LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
-            # An execution with a call to querylog.define supervises
-            # itself
-            self._supervises_executions_id += 1
-            supervises_executions_data.append({
-                "supervises_executions_id": self._supervises_executions_id,
-                "supervisor_id": current_execution_id,
-                "worker_id": current_execution_id
-            })
+            query_data, new_initiates_relations = self._register_new_query(event_data, current_execution_id)
+            initiates_executions_data.extend(new_initiates_relations)
+
         elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' and event_data['execution_state'] == 0:
-            # In queries over remote tables the plan is split in
-            # several executions. One of these is the supervisor
-            # execution that orchestrates the worker executions. The
-            # server emmits a call to the remote.register_supervisor
-            # MAL instruction in all of these plans. This instruction
-            # is effectively a noop. The idea is to associate the
-            # supervisor execution with the workers in a systematic
-            # way.
-
-            # Right now (December 2018) register_supervisor takes two
-            # arguments:
-            # 1. The primary execution session UUID
-            # 2. One UUID, unique for each worker execution
-
-            # Since the call to register_supervisor exists in both the
-            # supervisor and the worker plan with the same argumens,
-            # we can associate the two executions uniquely.
-
-            # First get the arguments of the register_supervisor call
-            for v in referenced_vars.values():
-                if v['list_index'] == 1:
-                    supervisor_session = v['mal_value'][1:-1]
-                elif v['list_index'] == 2:
-                    worker_uuid = v['mal_value'][1:-1]
-
-            if json_object.get('session') == supervisor_session:
-                # If we are at the supervisor execution we can find
-                # the supervisor execution id.
-
-                # First search if we have encountered the worker UUID
-                # before. If yes we can resolve the data to insert
-                # into the table.
-                if worker_uuid in self._supervisor_association:
-                    self._supervises_executions_id += 1
-                    supervises_executions_data.append({
-                        "supervises_executions_id": self._supervises_executions_id,
-                        "supervisor_id": current_execution_id,
-                        "worker_id": self._supervisor_association[worker_uuid],
-                    })
-                    del self._supervisor_association[worker_uuid]
-                else:
-                    # The worker UUID is not there. Make a note of the
-                    # association so that we are able to resolve the
-                    # data supervises_executions table when we
-                    # encounter the corresponding worker node.
-                    self._supervisor_association[worker_uuid] = current_execution_id
-            else:
-                # We are at the worker execution.
-
-                # First search if we have encountered the supervisor UUID
-                # before. If yes we can resolve the data.
-                if worker_uuid in self._supervisor_association:
-                    self._supervises_executions_id += 1
-                    supervises_executions_data.append({
-                        "supervises_executions_id": self._supervises_executions_id,
-                        "supervisor_id": self._supervisor_association[worker_uuid],
-                        "worker_id": current_execution_id,
-                    })
-                    del self._supervisor_association[worker_uuid]
-                else:
-                    # Make a note of the association so that we are
-                    # able to resolve the data later.
-                    self._supervisor_association[worker_uuid] = current_execution_id
+            self._handle_remote_initiates(json_object, referenced_vars, current_execution_id, initiates_executions_data)
+        elif event_data['mal_module'] == 'user' and event_data['execution_state'] == 0:
+            LOGGER.debug("\n  event data['instruction'] = %s\n  event_data['short_statement'] = %s\n  current execution = %d", event_data.get('instruction'), event_data.get('short_statement'), current_execution_id)
+            self._handle_local_initiates(event_data, current_execution_id, initiates_executions_data)
 
         return (
             event_data,
@@ -382,7 +310,7 @@ into a MonetDBLite-Python trace database.
             referenced_vars,
             event_variables,
             query_data,
-            supervises_executions_data
+            initiates_executions_data
         )
 
     def _set_execution_id(self, session, tag, user_function, server_version=None):
@@ -405,6 +333,142 @@ into a MonetDBLite-Python trace database.
         else:
             raise exceptions.MalParserError("execution for session {}, tag {} already registered".format(session, tag))
 
+    def _handle_local_initiates(self, event_data, current_execution_id, initiates_executions_data):
+        idx = self._executions["execution_id"].index(current_execution_id)
+        server_session = self._executions["server_session"][idx]
+
+        # We are concatenating the server_session with the function
+        # name. We are assuming that the function calls are local
+        # within a server session. For the remote case we need to
+        # detect the register_supervisor call.
+        key = "{}:{}".format(server_session, event_data["instruction"])
+
+        # We are defining a function...
+        if event_data['short_statement'].startswith('function'):
+            LOGGER.debug("Defining")
+            lookup_key = key + ":c"  # ...so we look up the *call* of the function
+            if lookup_key in self._initiates_association:
+                LOGGER.debug("  Resolving key %s", key)
+                self._initiates_executions_id += 1
+                initiates_executions_data.append({
+                    "initiates_executions_id": self._initiates_executions_id,
+                    "parent_id": self._initiates_association[lookup_key],
+                    "child_id": current_execution_id,
+                    "remote": False,
+                })
+                del self._initiates_association[lookup_key]
+            else:
+                LOGGER.debug("  Recording key %s", key)
+                record_key = key + ":d"
+                self._initiates_association[record_key] = current_execution_id
+        else:
+            # We are calling a function...
+            LOGGER.debug("Calling")
+            lookup_key = key + ":d"  # ...so we look up the *definition* of the function
+            if lookup_key in self._initiates_association:
+                LOGGER.debug("  Resolving key %s", key)
+                self._initiates_executions_id += 1
+                initiates_executions_data.append ({
+                    "initiates_executions_id": self._initiates_executions_id,
+                    "parent_id": current_execution_id,
+                    "child_id": self._initiates_association[lookup_key],
+                    "remote": False,
+                })
+                del self._initiates_association[lookup_key]
+            else:
+                LOGGER.debug("  Recording key %s", key)
+                record_key = key + ":c"
+                self._initiates_association[record_key] = current_execution_id
+                
+
+    def _register_new_query(self, event_data, current_execution_id):
+        initiates_executions_data = list()
+        self._query_id += 1
+        query_data = {
+            "query_id": self._query_id,
+            "query_text": self._parse_query_text(event_data['short_statement']),  # TODO: find the value of the variable with index=1
+            "query_label": None,
+            "root_execution_id": event_data['mal_execution_id']
+        }
+        LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
+        # An execution with a call to querylog.define supervises
+        # itself
+        self._initiates_executions_id += 1
+        initiates_executions_data.append({
+            "initiates_executions_id": self._initiates_executions_id,
+            "parent_id": current_execution_id,
+            "child_id": current_execution_id,
+            "remote": False,
+        })
+
+        return (query_data, initiates_executions_data)
+
+    def _handle_remote_initiates(self, json_object, referenced_vars, current_execution_id, initiates_executions_data):
+        # In queries over remote tables the plan is split in
+        # several executions. One of these is the supervisor
+        # execution that orchestrates the worker executions. The
+        # server emmits a call to the remote.register_supervisor
+        # MAL instruction in all of these plans. This instruction
+        # is effectively a noop. The idea is to associate the
+        # supervisor execution with the workers in a systematic
+        # way.
+
+        # Right now (December 2018) register_supervisor takes two
+        # arguments:
+        # 1. The primary execution session UUID
+        # 2. One UUID, unique for each worker execution
+
+        # Since the call to register_supervisor exists in both the
+        # supervisor and the worker plan with the same argumens,
+        # we can associate the two executions uniquely.
+
+        # First get the arguments of the register_supervisor call
+        for v in referenced_vars.values():
+            if v['list_index'] == 1:
+                supervisor_session = v['mal_value'][1:-1]
+            elif v['list_index'] == 2:
+                worker_uuid = v['mal_value'][1:-1]
+
+        if json_object.get('session') == supervisor_session:
+            # If we are at the supervisor execution we can find
+            # the supervisor execution id.
+
+            # First search if we have encountered the worker UUID
+            # before. If yes we can resolve the data to insert
+            # into the table.
+            if worker_uuid in self._initiates_association:
+                self._initiates_executions_id += 1
+                initiates_executions_data.append({
+                    "initiates_executions_id": self._initiates_executions_id,
+                    "parent_id": current_execution_id,
+                    "child_id": self._initiates_association[worker_uuid],
+                    "remote": True,
+                })
+                del self._initiates_association[worker_uuid]
+            else:
+                # The worker UUID is not there. Make a note of the
+                # association so that we are able to resolve the
+                # data supervises_executions table when we
+                # encounter the corresponding worker node.
+                self._initiates_association[worker_uuid] = current_execution_id
+        else:
+            # We are at the worker execution.
+
+            # First search if we have encountered the supervisor UUID
+            # before. If yes we can resolve the data.
+            if worker_uuid in self._initiates_association:
+                self._initiates_executions_id += 1
+                initiates_executions_data.append({
+                    "initiates_executions_id": self._initiates_executions_id,
+                    "parent_id": self._initiates_association[worker_uuid],
+                    "child_id": current_execution_id,
+                    "remote": True,
+                })
+                del self._initiates_association[worker_uuid]
+            else:
+                # Make a note of the association so that we are
+                # able to resolve the data later.
+                self._initiates_association[worker_uuid] = current_execution_id
 
     def _get_execution_id(self, session, tag):
         '''Return the (local) execution id for the given session and tag
@@ -419,10 +483,6 @@ into a MonetDBLite-Python trace database.
 This will create a representation ready to be inserted into the
 database.
 '''
-        events = list()
-        variables = list()
-        prerequisite_events = list()
-
         # This is a list that we use for deduplication of variables.
         var_name_list = list()
         execution = -1
@@ -430,8 +490,6 @@ database.
         for json_event in json_stream:
             src = json_event.get("source")
             if src == "trace":
-                prev_execution = execution
-
                 if json_event.get('session') is None:
                     LOGGER.error(json_event)
                     raise exceptions.MalParserError('Missing session')
@@ -439,7 +497,7 @@ database.
                     LOGGER.error(json_event)
                     raise exceptions.MalParserError('Missing tag')
 
-                event_data, prereq_list, referenced_vars, event_variables, query_data, supervises_executions_data = self._parse_event(json_event)
+                event_data, prereq_list, referenced_vars, event_variables, query_data, initiates_executions_data = self._parse_event(json_event)
                 execution = self._get_execution_id(json_event.get('session'), json_event.get('tag'))
                 event_data['mal_execution_id'] = execution
                 # events.append(event_data)
@@ -491,14 +549,14 @@ database.
                     for k, v in query_data.items():
                         self._query.get(k).append(v)
 
-                if supervises_executions_data is not None:
-                    for i in supervises_executions_data:
+                if initiates_executions_data is not None:
+                    for i in initiates_executions_data:
                         for k, v in i.items():
-                            self._supervises_executions.get(k).append(v)
+                            self._initiates_executions.get(k).append(v)
 
                 cnt += 1
         LOGGER.debug("%d JSON objects parsed", cnt)
-        LOGGER.debug("supervises executions = %s", self._supervises_executions)
+        LOGGER.debug("initiates executions = %s", self._initiates_executions)
 
     def _parse_heartbeat(self, json_object):
         '''Parse a heartbeat object and adds it to the database.
@@ -615,9 +673,8 @@ The data is ready to be inserted into MonetDBLite.
           + val
 
         """
-        if len(self._supervisor_association) > 0:
-            LOGGER.debug("supervisor association table not empty: %s",
-                         self._supervisor_association)
+        if len(self._initiates_association) > 0:
+            LOGGER.warning("supervisor association table not empty: %s", self._initiates_association)
         return {
             "mal_execution": self._executions,
             "profiler_event": self._events,
@@ -625,7 +682,7 @@ The data is ready to be inserted into MonetDBLite.
             "mal_variable": self._variables,
             "event_variable_list": self._event_variables,
             "query": self._query,
-            "supervises_executions": self._supervises_executions,
+            "initiates_executions": self._initiates_executions,
             "heartbeat": self._heartbeats,
             "cpuload": self._cpuloads
         }
