@@ -9,6 +9,8 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 
 [Unreleased]
 ============
+v0.3.0 (2019-02-21)
+===================
 Added
 *****
 * Wrappers for ``Connection::transaction``, ``Connection::commit`` and
