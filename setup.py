@@ -17,7 +17,7 @@ setup(
     packages=find_packages(),
     long_description=long_description,
     long_description_content_type='text/x-rst',
-    install_requires=['monetdblite>=0.6.2'],
+    install_requires=['monetdblite>=0.6.3'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     include_package_data=True,
