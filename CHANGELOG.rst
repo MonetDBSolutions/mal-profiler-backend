@@ -27,6 +27,12 @@ Changed
 * ``DatabaseManager::execute_query`` now accepts an argument that
   collects parameters for the query. The semantics are identical to
   ``MonetdbLite::Cursor::execute``.
+* Generalized the ``supervises_execution`` relation: It now expresses
+  the call graph between executions, not only the remote calls. The
+  relevant SQL table was renamed from ``supervises_execution`` to
+  ``initiates_executions``. A ``remote`` boolean field was added to
+  this table to indicate if parent and child execution run on
+  different MonetDB sessions.
 
 
 v0.2.0 (2019-01-14)
