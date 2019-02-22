@@ -173,9 +173,9 @@ class TestParser(object):
 
         id1 = parser_object._get_execution_id(session, tag1)
         assert id1 is None
-        id1 = parser_object._set_execution_id(session, tag1, 'main', '12')
+        id1 = parser_object._create_new_execution(session, tag1, 'main', '12')
         id2 = parser_object._get_execution_id(session, tag1)
-        id3 = parser_object._set_execution_id(session, tag2, 'main', '12')
+        id3 = parser_object._create_new_execution(session, tag2, 'main', '12')
 
         assert id1 == id2
         assert id2 != id3

@@ -249,7 +249,8 @@ into a MonetDBLite-Python trace database.
                     json_object.get('tag')
                 ))
                 instruction = json_object.get('function').split('.')[1]
-            current_execution_id = self._set_execution_id(
+
+            current_execution_id = self._create_new_execution(
                 json_object.get('session'),
                 json_object.get('tag'),
                 instruction,
@@ -313,7 +314,9 @@ into a MonetDBLite-Python trace database.
             initiates_executions_data
         )
 
-    def _set_execution_id(self, session, tag, user_function, server_version=None):
+    def _create_new_execution(self, session, tag, user_function, server_version=None):
+        """Define a new execution
+"""
         key = "{}:{}".format(session, tag)
         execution_id = self._execution_dict.get(key)
 
