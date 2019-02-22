@@ -180,6 +180,9 @@ class ProfilerObjectParser(object):
         Returns:
             A dictionary representing a variable. See :ref:`data_structures`.
         """
+        # As mentioned elsewhere variables are scoped by
+        # executions. The variable key is the concatenation of the
+        # current execution id and tha variable name.
         var_key = "{}:{}".format(current_execution_id, var_data.get("name"))
         var_id = self._var_name_to_id.get(var_key)
 
@@ -212,16 +215,31 @@ class ProfilerObjectParser(object):
             "parent": var_data.get('parent'),
             "list_index": var_data.get('index')
         }
+        # If this is a new variable, add it to the variable symbol
+        # table.
         if new_var:
             self._var_name_to_id[var_key] = self._variable_id
 
         return variable
 
     def _parse_query_text(self, short_description):
-        # A better way to accomplish the goal of this method is to
-        # look up the MAL variable given as first argument of the
-        # querylog.define call and get its value. This implementation
-        # is a quick and dirty hack.
+        """Extract the SQL executed from the short description attribute.
+
+        Args:
+            short_description: The short_description attribute of the
+                JSON event.
+
+        Returns:
+            the SQL text executed.
+
+        Note:
+            A better way to accomplish this is to look up the MAL
+            variable given as first argument of the querylog.define
+            call and get its value. This implementation is a quick and
+            dirty hack.
+
+        """
+
         p = re.compile(r"^define\((.+)\)")
         m = p.match(short_description)
         qtext = None
@@ -241,7 +259,7 @@ class ProfilerObjectParser(object):
 
         If this is the first time we encounter this specific
         combination of ``session`` and ``tag``, create a new MAL
-        execution.
+        execution (see :ref:`mal_execution`).
 
         Args:
             json_object: A dictionary representing a JSON object
@@ -262,12 +280,16 @@ class ProfilerObjectParser(object):
 
         """
 
-        self._event_id += 1
+        # Set up the execution. First get the execution id
+        # corresponding to our server_session/tag combination. If it
+        # is None, then set up a new execution.
         current_execution_id = self._get_execution_id(json_object.get('session'), json_object.get('tag'))
         if current_execution_id is None:
+            # Get the MAL function name of this execution. This is the
+            # instruction field of the event with pc == 0
             instruction = json_object.get('instruction')
             if json_object.get('pc') != 0:
-                # Surprisingly this can happen. Normally the first
+                # Surprisingly this can happen! Normally the first
                 # time we encounter a new combination of ``session``
                 # and ``tag`` the object should have pc==0. I noticed
                 # it on remote table queries. This is probably a BUG
@@ -276,8 +298,13 @@ class ProfilerObjectParser(object):
                     json_object.get('session'),
                     json_object.get('tag')
                 ))
+                # If the event with pc == 0 does not exist, then get
+                # the name by splitting the function field of the JSON
+                # object.
                 instruction = json_object.get('function').split('.')[1]
 
+            # This call will not throw an exception because the
+            # current_execution_id is None.
             current_execution_id = self._create_new_execution(
                 json_object.get('session'),
                 json_object.get('tag'),
@@ -285,6 +312,8 @@ class ProfilerObjectParser(object):
                 json_object.get('version')
             )
 
+        # Fill in the event metadata
+        self._event_id += 1
         event_data = {
             "event_id": self._event_id,
             "mal_execution_id": current_execution_id,
@@ -304,31 +333,47 @@ class ProfilerObjectParser(object):
             "version": json_object.get("version"),
         }
 
+        # The list of prerequisite objects is directly available from
+        # the JSON object.
         prereq_list = json_object.get("prereq")
+
         referenced_vars = dict()
         event_variables = list()
 
+        # The following process applies equally well to both the
+        # return values and the arguments of the MAL instruction.
         for var_kind in ["ret", "arg"]:
             for item in json_object.get(var_kind, []):
+                # First, parse the variable
                 parsed_var = self._parse_variable(item, current_execution_id)
                 var_name = parsed_var.get('name')
                 if var_name is None:
                     raise exceptions.MalParserError('Unnamed variable')
+
+                # Gather all the variables in a dictionary keyed by
+                # the variable name.
                 referenced_vars[var_name] = parsed_var
+                # Gather some metadata about the variable.
                 event_variables.append({
                     "event_id": self._event_id,
                     "variable_list_index": parsed_var.get('list_index'),
                     "variable_id": parsed_var.get('variable_id')
                 })
 
+        # Handle the initiates execution relation:
         query_data = None
         initiates_executions_data = list()
+        # If we are processing a querylog.define instruction, register
+        # a new query and a self calling execution.
         if event_data['mal_module'] == 'querylog' and event_data['instruction'] == 'define' and event_data['execution_state'] == 0:
             query_data, new_initiates_relations = self._register_new_query(event_data, current_execution_id)
             initiates_executions_data.extend(new_initiates_relations)
-
+        # A remote.register_supervisor instruction, signifies a remote
+        # call.
         elif event_data['mal_module'] == 'remote' and event_data['instruction'] == 'register_supervisor' and event_data['execution_state'] == 0:
             self._handle_remote_initiates(json_object, referenced_vars, current_execution_id, initiates_executions_data)
+        # Finally, if the mal module is "user" we are calling a user
+        # defined function.
         elif event_data['mal_module'] == 'user' and event_data['execution_state'] == 0:
             LOGGER.debug("\n  event data['instruction'] = %s\n  event_data['short_statement'] = %s\n  current execution = %d", event_data.get('instruction'), event_data.get('short_statement'), current_execution_id)
             self._handle_local_initiates(event_data, current_execution_id, initiates_executions_data)
@@ -450,6 +495,25 @@ class ProfilerObjectParser(object):
         return (query_data, initiates_executions_data)
 
     def _handle_remote_initiates(self, json_object, referenced_vars, current_execution_id, initiates_executions_data):
+        """Register or resolve a remote execution association.
+
+        See :ref:`remote_calls` for more information.
+
+        Args:
+            json_object: The ``remote.register_supervisor``
+                instruction data.
+            referenced_vars: The arguments of the
+                ``remote.register_supervisor`` call.
+            current_execution_id: The execution id of the call. This
+                is used to distinguish between caller and callee.
+            initiates_executions_data: A list where the resolved
+                associations are recorded.
+
+        Todo:
+            This method should be refactored to return a meanignful
+            value instead of "returning" using an argument.
+
+        """
         # In queries over remote tables the plan is split in
         # several executions. One of these is the supervisor
         # execution that orchestrates the worker executions. The
@@ -531,8 +595,8 @@ class ProfilerObjectParser(object):
         each event in the ``json_stream`` as outlined below:
 
         1. Basic sanity checks and initial parsing of the JSON event. At this
-           stage we decide what is the execution id.
-        2.
+           stage we decide what is the execution id for this event.
+        2. Handle the referenced variables.
 
         Args:
             json_stream: an iterable (usually a list) containing python dictionaries
@@ -546,6 +610,7 @@ class ProfilerObjectParser(object):
             # Stage 1: make sure the json_event we got from the
             # MonetDB server contains session and tag fields. These
             # fields define the MAL execution. Parse the event and
+            # keep the data around for further processing.
             src = json_event.get("source")
             if src == "trace":
                 if json_event.get('session') is None:
@@ -559,20 +624,21 @@ class ProfilerObjectParser(object):
                 execution = self._get_execution_id(json_event.get('session'), json_event.get('tag'))
                 event_data['mal_execution_id'] = execution
 
-                # Add new event to the table
+                # So far, so good. Add new event to the collection
+                # that needs to be inserted in the database table.
                 ignored_keys = ['version']
                 for k, v in event_data.items():
                     if k in ignored_keys:
                         continue
                     self._events[k].append(v)
 
-
+                # Stage 2: Handle the referenced variables.
                 for var_name, var in referenced_vars.items():
                     # Ignore variables that we have already seen
-                    # Variables and variable names are scoped by executions
-                    # (session + tag combinations). Between different
-                    # executions variables with the same name are allowed to
-                    # exist.
+                    # Variables and variable names are scoped by
+                    # executions (session + tag combinations). Between
+                    # different executions variables with the same
+                    # name are allowed to exist.
                     scoped_variable = "{}:{}".format(execution, var_name)
                     if scoped_variable in var_name_list:
                         continue

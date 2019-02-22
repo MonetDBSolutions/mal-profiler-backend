@@ -33,6 +33,52 @@ Normally, each execution should have an instruction with ``pc == 0`` but this
 assumption is violated for distributed queries (merge tables). This is probably
 a bug of the MonetDB Server.
 
+.. _initiates_relation:
+
+Initiates relation for MAL Executions
+-------------------------------------
+
+MAL executions may initiate other MAL executions. This happens in three
+different ways:
+
+.. _local_calls:
+
+Local calls
+###########
+
+*Local calls*, are calls of MAL functions defined in the ``user`` module.
+
+.. _remote_calls:
+
+Remote calls
+############
+
+*Remote calls*, i.e. executions in different server sessions, initiated through
+the remote table feature. The mechanism for associating executions in two
+different MonetDB server sessions is the ``remote.register_supervisor`` MAL
+instruction. This is a no-op instruction that takes two arguments. The plan
+generation code of the MonetDB server, inserts a call of the
+``remote.register_supervisor`` both in the local and the remote session, with
+the same arguments. The first argument is the session id of the local session
+and the second argument is a UUID generated just before the call.
+
+When the parser sees a call to the ``remote.register_supervisor``, it searches
+in an association table for the arguments. If it finds an entry, the association
+is resolved and an entry in the ``initiates_executions`` SQL table is
+(eventually) created. If it does not find an entry in the association table,
+then it creates one. In other words the resolution of the call graph of remote
+executions needs both the local and the remote plans to be processed by the
+parser.
+
+.. _execution_tree:
+
+Execution tree
+##############
+
+Each query has one special execution, the root of the execution call tree. It
+is the execution that runs the MAL instruction ``querylog.define``. We adopt the
+convention that this execution initiates itself.
+
 .. _mal_variables:
 
 MAL Variables
