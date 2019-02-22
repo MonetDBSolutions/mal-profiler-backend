@@ -107,7 +107,7 @@ to the tables in the database. These are:
       The name of the MAL module this instruction belongs to. For
       example ``algebra``, ``bat``, etc.
 
-    ``version`` **(after Jan2019 version)**
+    ``version`` **(after Apr2019 version)**
       The version of the server that produced the profiling trace.
 
 - ``variable``
@@ -137,7 +137,7 @@ to the tables in the database. These are:
 
     ``hghbase``
         (???)
-	
+
     ``eol``
         If `True` then the variable can be garbage collected.
 
