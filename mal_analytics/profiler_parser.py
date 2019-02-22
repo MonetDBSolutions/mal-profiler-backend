@@ -14,20 +14,25 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ProfilerObjectParser(object):
-    '''A parser for the MonetDB profiler traces.
+    """A parser for the MonetDB profiler traces.
 
-The purpose of this class is to turn the JSON objects that the
-MonetDB profiler emmits into a representation ready to be inserted
-into a MonetDBLite-Python trace database.
+    The purpose of this class is to turn the JSON objects that the
+    MonetDB profiler emmits into a representation ready to be inserted
+    into a MonetDBLite-Python trace database.
 
-:param execution_id: The maximum execution id in the database
-:param event_id: The maximum event id in the database
-:param variable_id: The maximum variable id in the database
-:param heartbeat_id: The maximum heartbeat id in the database
-:param prereq_id: The maximum prerequisite relation id in the database
-:param query_id: The maximum query id in the database
-:param supervises_executions_id: The maximum query_executions id in the database
-'''
+    Args:
+        limits: A dictionary providing the maximum values of the table
+            ids currently found in the database. These include the
+            following:
+
+                * execution_id
+                * event_id
+                * variable_id
+                * heartbeat_id
+                * prereq_id
+                * query_id
+                * supervises_executions_id
+    """
 
     def __init__(self, limits=dict()):
         logging.basicConfig(level=logging.DEBUG)
@@ -77,7 +82,7 @@ into a MonetDBLite-Python trace database.
 
     def _initialize_tables(self):
         """Initialize dictionaries that map directly to the db tables.
-"""
+        """
         self._executions = {
             "execution_id": list(),
             "server_session": list(),
@@ -167,11 +172,14 @@ into a MonetDBLite-Python trace database.
 
 
     def _parse_variable(self, var_data, current_execution_id):
-        '''Parse a single MAL variable.
+        """Parse a single MAL variable.
 
-:param var_data: A dictionary representing the JSON description of a MAL variable.
-:returns: A dictionary representing a variable. See :ref:`data_structures`.
-'''
+        Args:
+            var_data: A dictionary representing the JSON description of a MAL variable.
+
+        Returns:
+            A dictionary representing a variable. See :ref:`data_structures`.
+        """
         var_key = "{}:{}".format(current_execution_id, var_data.get("name"))
         var_id = self._var_name_to_id.get(var_key)
 
@@ -229,23 +237,30 @@ into a MonetDBLite-Python trace database.
         return qtext
 
     def _parse_event(self, json_object):
-        '''Parse a single profiler event.
+        """Parse a single profiler event.
 
-If this is the first time we encounter this specific combination of
-``session`` and ``tag``, create a new MAL execution.
+        If this is the first time we encounter this specific
+        combination of ``session`` and ``tag``, create a new MAL
+        execution.
 
-:param json_object: A dictionary representing a JSON object emmited by
-                    the MonetDB server.
+        Args:
+            json_object: A dictionary representing a JSON object
+            emmited by the MonetDB server.
 
-:returns: a tuple of 5 items:
+        Returns:
+            A tuple of 5 items
 
-    - A dictionary containing the event data (see :ref:`data_structures`)
-    - A list of prerequisite event ids
-    - A list of referenced variables (see :ref:`data_structures`)
-    - A list of argument variable ids
-    - A list of return variable ids
+                * A dictionary containing the event data (see :ref:`data_structures`)
+                * A list of prerequisite event ids
+                * A list of referenced variables (see :ref:`data_structures`)
+                * A list of argument variable ids
+                * A list of return variable ids
 
-        '''
+        Raises:
+            :class:`mal\_analytics.exceptions.MalParserError`: if the
+                variable representation does not include a name
+
+        """
 
         self._event_id += 1
         current_execution_id = self._get_execution_id(json_object.get('session'), json_object.get('tag'))
@@ -328,18 +343,22 @@ If this is the first time we encounter this specific combination of
         )
 
     def _create_new_execution(self, session, tag, user_function, server_version=None):
-        """Define a new execution
+        """Define a new execution.
 
-:param session: The session UUID of the execution
-:param tag: The tag of the execution
-:param user_function: The name of the function this execution defines
-:param server_version: The MonetDB server version. This might not
-                       always be available.
+        Args:
+            session: The session UUID of the execution.
+            tag: The tag of the execution.
+            user_function: The name of the function this execution defines.
+            server_version: The MonetDB server version. This might not
+                always be available.
 
-:returns: The id (a serial number) of the new execution
+        Returns:
+            The id (a serial number) of the new execution.
 
-:raises: `mal_analytics.exceptions.MalParserError` if there is already
-        an execution with this session and tag.
+        Raises:
+            :class:`mal\_analytics.exceptions.MalParserError`: if
+                there is already an execution with this session and
+                tag.
 
         """
         key = "{}:{}".format(session, tag)
@@ -498,24 +517,27 @@ If this is the first time we encounter this specific combination of
                 self._initiates_association[worker_uuid] = current_execution_id
 
     def _get_execution_id(self, session, tag):
-        '''Return the (local) execution id for the given session and tag
+        """Return the (local) execution id for the given session and tag
 
-        '''
+        """
 
         return self._execution_dict.get("{}:{}".format(session, tag))
 
     def parse_trace_stream(self, json_stream):
-        '''Parse a list of json trace objects
+        """Parse a list of json trace objects
 
-This will create a representation ready to be inserted into the
-database. This method performs a number of actions for each event in
-the ``json_stream`` as outlined below:
+        This will create a representation ready to be inserted into
+        the database. This method performs a number of actions for
+        each event in the ``json_stream`` as outlined below:
 
-    1. Basic sanity checks and initial parsing of the JSON event. At this
-       stage we decide what is the execution id.
-    2.
+        1. Basic sanity checks and initial parsing of the JSON event. At this
+           stage we decide what is the execution id.
+        2.
 
-        '''
+        Args:
+            json_stream: an iterable (usually a list) containing python dictionaries
+
+        """
         # This is a list that we use for deduplication of variables.
         var_name_list = list()
         execution = -1
@@ -594,9 +616,9 @@ the ``json_stream`` as outlined below:
         LOGGER.debug("initiates executions = %s", self._initiates_executions)
 
     def _parse_heartbeat(self, json_object):
-        '''Parse a heartbeat object and adds it to the database.
+        """Parse a heartbeat object and adds it to the database.
 
-'''
+"""
         pass
         # cursor = self._connection.cursor()
         # self._heartbeat_id += 1
@@ -621,92 +643,92 @@ the ``json_stream`` as outlined below:
     def get_data(self):
         """Return the data that has been parsed so far.
 
-The data is ready to be inserted into MonetDBLite.
+        The data is ready to be inserted into MonetDBLite.
 
-:returns: A dictionary, with keys the names of the tables and values
-  the following dictionaries:
+        Returns:
+            A dictionary, with keys the names of the tables and values
+            the following dictionaries:
 
-        - A dictionary for executions with the following keys:
+                - A dictionary for executions with the following keys:
 
-          + execution_id
-          + server_session
-          + tag
-          + server_version
-          + user_function
+                  + execution_id
+                  + server_session
+                  + tag
+                  + server_version
+                  + user_function
 
-        - A dictionary for events with the following keys:
+                - A dictionary for events with the following keys:
 
-          + event_id
-          + mal_execution_id
-          + pc
-          + execution_state
-          + clk
-          + ctime
-          + thread
-          + mal_function
-          + usec
-          + rss
-          + type_size
-          + long_statement
-          + short_statement
-          + instruction
-          + mal_module
+                  + event_id
+                  + mal_execution_id
+                  + pc
+                  + execution_state
+                  + clk
+                  + ctime
+                  + thread
+                  + mal_function
+                  + usec
+                  + rss
+                  + type_size
+                  + long_statement
+                  + short_statement
+                  + instruction
+                  + mal_module
 
-        - A dictionary for prerequisite event with the following keys:
+                - A dictionary for prerequisite event with the following keys:
 
-          + prerequisite_relation_id
-          + prerequisite_event
-          + consequent_event
+                  + prerequisite_relation_id
+                  + prerequisite_event
+                  + consequent_event
 
-        - A dictionary for variables with the following keys:
+                - A dictionary for variables with the following keys:
 
-          + variable_id
-          + name
-          + mal_execution_id
-          + alias
-          + type_id
-          + is_persistent
-          + bid
-          + var_count
-          + var_size
-          + seqbase
-          + hghbase
-          + eol
-          + mal_value
-          + parent
+                  + variable_id
+                  + name
+                  + mal_execution_id
+                  + alias
+                  + type_id
+                  + is_persistent
+                  + bid
+                  + var_count
+                  + var_size
+                  + seqbase
+                  + hghbase
+                  + eol
+                  + mal_value
+                  + parent
 
-        - A dictionary for connecting events to variables with the following keys:
+                - A dictionary for connecting events to variables with the following keys:
 
-          + event_id
-          + variable_list_index
-          + variable_id
+                  + event_id
+                  + variable_list_index
+                  + variable_id
 
-        - A dictionary for queries with the following keys:
+                - A dictionary for queries with the following keys:
 
-          + query_id
-          + query_text
+                  + query_id
+                  + query_text
 
-        - A dictionary expressing the relation of execution
-          supervision, with the following keys:
+                - A dictionary expressing the relation of execution
+                  supervision, with the following keys:
 
-          + supervises_executions_id
-          + supervisor_id
-          + worker_id
+                  + supervises_executions_id
+                  + supervisor_id
+                  + worker_id
 
-        - A dictionary for heartbeats with the following keys:
+                - A dictionary for heartbeats with the following keys:
 
-          + heartbeat_id
-          + server_session
-          + clk
-          + ctime
-          + nvcsw
+                  + heartbeat_id
+                  + server_session
+                  + clk
+                  + ctime
+                  + nvcsw
 
-        - A dictionary for cpuloads with the following keys:
+                - A dictionary for cpuloads with the following keys:
 
-          + cpuload_id
-          + heartbeat_id
-          + val
-
+                  + cpuload_id
+                  + heartbeat_id
+                  + val
         """
         if self._initiates_association:
             LOGGER.warning("supervisor association table not empty: %s", self._initiates_association)
@@ -724,7 +746,7 @@ The data is ready to be inserted into MonetDBLite.
 
     def clear_internal_state(self):
         """Clear the internal dictionaries.
-"""
+        """
         del self._executions
         del self._events
         del self._prerequisite_events

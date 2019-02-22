@@ -20,9 +20,9 @@ LOGGER = logging.getLogger(__name__)
 class Singleton(type):
     """Singleton pattern implementation for Python 3.
 
-See also `this <https://stackoverflow.com/a/6798042>`_
-stackoverflow post.
-"""
+    See also `this <https://stackoverflow.com/a/6798042>`_
+    stackoverflow post.
+    """
     # We should consider having one instance per data directory,
     # although it probably does not make sense with MonetDBLite.
     _instances = {}
@@ -41,14 +41,14 @@ stackoverflow post.
 class DatabaseManager(object, metaclass=Singleton):
     """A connection manager for the database.
 
-This class is a *singleton*. Singletons are to be avoided in
-general, but unfortunatelly any component communicating directly
-with MonetDBLite should be a singleton, because of the way
-MonetDBLite operates.
+    This class is a *singleton*. Singletons are to be avoided in
+    general, but unfortunatelly any component communicating directly
+    with MonetDBLite should be a singleton, because of the way
+    MonetDBLite operates.
 
-
-:param dbpath: The directory to initialize MonetDBLite
-"""
+    Args:
+        dbpath: The directory to initialize MonetDBLite
+    """
 
     def __init__(self, dbpath):
         self._dbpath = dbpath
@@ -104,16 +104,20 @@ MonetDBLite operates.
     def get_dbpath(self):
         """Get the location on disk of the database.
 
-:returns: The path where the database has been initialized.
-"""
+        Returns:
+            The path where the database has been initialized.
+        """
         return self._dbpath
 
     def execute_query(self, query, params=None):
         """Execute a single query and return the results.
 
-:param query: The text of the query.
-:returns: The results
-"""
+        Args:
+            query: The text of the query.
+
+        Returns:
+            The results
+        """
         cursor = self._connection.cursor()
         try:
             LOGGER.debug("executing query\n %s\n with parameters\n %s", query, params)
@@ -131,12 +135,13 @@ MonetDBLite operates.
     def execute_sql_script(self, script_path):
         """Execute a given sql script.
 
-This method does not return results. This is intended for
-executing scripts with side effects, i.e. table creation, data
-loading, and adding/dropping constraints.
+        This method does not return results. This is intended for
+        executing scripts with side effects, i.e. table creation, data
+        loading, and adding/dropping constraints.
 
-:param script_path: A string with the path to the script.
-"""
+        Args:
+            script_path: A string with the path to the script.
+        """
         with open(script_path) as sql_fl:
             sql_in = sql_fl.readlines()
 
@@ -156,12 +161,13 @@ loading, and adding/dropping constraints.
     def get_cursor(self):
         """Get a cursor to the current database connection.
 
-:returns: A MonetDBLite cursor.
-"""
+        Returns:
+            A MonetDBLite cursor.
+        """
         return self._connection.cursor()
 
     def close_connection(self):
-        """Close the connection to the database"""
+        """Close the connection to the database."""
 
         self._connection.close()
         self._connection = None
@@ -169,27 +175,29 @@ loading, and adding/dropping constraints.
     def is_connected(self):
         """Inquire if there is a live connection to the database.
 
-:returns: `True` if there is an open database connection.
-"""
+        Returns:
+            `True` if there is an open database connection.
+        """
         return self._connection is not None
 
     def get_limits(self):
         """Get the maximum IDs currently in the database for some tables.
 
-While parsing traces we need to assign identifiers to various
-objects. These need to be consistent with what is there in the
-database currently. These limits need to be supplied to
-:class:`mal\_analytics.profiler\_parser.ProfilerObjectParser`. This
-function returns a tuple containing these limits.
+        While parsing traces we need to assign identifiers to various
+        objects. These need to be consistent with what is there in the
+        database currently. These limits need to be supplied to
+        :class:`mal\_analytics.profiler\_parser.ProfilerObjectParser`. This
+        function returns a tuple containing these limits.
 
-:returns: A tupple with the following elements:
+        Returns:
+            A tupple with the following elements:
 
-          #. execution ID
-          #. even ID
-          #. variable ID
-          #. heartbeat ID
+              #. execution ID
+              #. even ID
+              #. variable ID
+              #. heartbeat ID
 
-"""
+        """
 
         query_template = "SELECT MAX({id_column}) AS {alias} FROM {table}"
         queries = [
@@ -210,7 +218,8 @@ function returns a tuple containing these limits.
     def create_parser(self):
         """Create and initialize a new :class:`mal_analytics.profiler_parser.ProfilerObjectParser` object.
 
-:returns: A new parser for MonetDB JSON Profiler objects
+        Returns:
+            A new parser for MonetDB JSON Profiler objects
         """
 
         return ProfilerObjectParser(self.get_limits())

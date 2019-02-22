@@ -6,18 +6,17 @@
 
 
 class AnalyticsException(Exception):
-    pass
+    """Base Exception.
+    """
 
 class MalParserError(AnalyticsException):
-    """Base class for any parser exception"""
-    pass
-
+    """Base class for any parser exception.
+    """
 
 class IntegrityConstraintViolation(MalParserError):
-    """Gets raised if a integrity constraint (e.g. primary/foreign keys) is violated.
+    """Gets raised if a integrity constraint (e.g. primary/foreign keys)
+    is violated.
     """
-    pass
-
 
 class MissingDataError(MalParserError):
     pass

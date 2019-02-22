@@ -17,20 +17,20 @@ LOGGER = logging.getLogger(__name__)
 
 
 def is_gzip(filename):
-    '''Checks the if the first two bytes of the file match the gzip magic number'''
+    """Checks the if the first two bytes of the file match the gzip magic number"""
     with open(filename, 'rb') as ff:
         return binascii.hexlify(ff.read(2)) == b'1f8b'
 
 
 def is_bzip2(filename):
-    '''Checks the if the first two bytes of the file match the bz2 magic number'''
+    """Checks the if the first two bytes of the file match the bz2 magic number"""
     with open(filename, 'rb') as ff:
         return binascii.hexlify(ff.read(2)) == b'425a'
 
 
 def abstract_open(filename):
-    '''Open a file for reading, automatically detecting a number of compression schemes
-    '''
+    """Open a file for reading, automatically detecting a number of compression schemes
+    """
     compressions = {
         is_gzip: gzip.open,
         is_bzip2: bz2.open
