@@ -4,19 +4,18 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "*"
-ipython = "*"
-pytest = "*"
-malpar = {path = ".",editable = true}
-tox = "*"
-monetdblite = "*"
-sphinx = "*"
-python-language-server = {extras = ["all"],version = "*"}
-matplotlib = "*"
-pytest-cov = "*"
-twine = "*"
+mal_analytics = {path = ".",editable = true}
+monetdblite = ">=0.6.3"
 
 [dev-packages]
+ipython = "*"
+pytest = "*"
+tox = "*"
+sphinx = "*"
+pytest-cov = "*"
+twine = "*"
+matplotlib = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.7"
