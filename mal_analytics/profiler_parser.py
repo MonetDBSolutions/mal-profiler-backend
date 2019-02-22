@@ -210,6 +210,10 @@ into a MonetDBLite-Python trace database.
         return variable
 
     def _parse_query_text(self, short_description):
+        # A better way to accomplish the goal of this method is to
+        # look up the MAL variable given as first argument of the
+        # querylog.define call and get its value. This implementation
+        # is a quick and dirty hack.
         p = re.compile(r"^define\((.+)\)")
         m = p.match(short_description)
         qtext = None
@@ -225,9 +229,14 @@ into a MonetDBLite-Python trace database.
         return qtext
 
     def _parse_event(self, json_object):
-        '''Parse a single profiler event
+        '''Parse a single profiler event.
 
-:param json_object: A dictionary representing a JSON object emmited by the profiler.
+If this is the first time we encounter this specific combination of
+``session`` and ``tag``, create a new MAL execution.
+
+:param json_object: A dictionary representing a JSON object emmited by
+                    the MonetDB server.
+
 :returns: a tuple of 5 items:
 
     - A dictionary containing the event data (see :ref:`data_structures`)
@@ -235,15 +244,19 @@ into a MonetDBLite-Python trace database.
     - A list of referenced variables (see :ref:`data_structures`)
     - A list of argument variable ids
     - A list of return variable ids
-'''
+
+        '''
 
         self._event_id += 1
         current_execution_id = self._get_execution_id(json_object.get('session'), json_object.get('tag'))
         if current_execution_id is None:
             instruction = json_object.get('instruction')
             if json_object.get('pc') != 0:
-                # Surprisingly this can happen. I noticed it on remote
-                # table queries.
+                # Surprisingly this can happen. Normally the first
+                # time we encounter a new combination of ``session``
+                # and ``tag`` the object should have pc==0. I noticed
+                # it on remote table queries. This is probably a BUG
+                # in the MonetDB server.
                 LOGGER.warning("Instruction with pc==0 missing for execution {}:{}".format(
                     json_object.get('session'),
                     json_object.get('tag')
@@ -316,7 +329,19 @@ into a MonetDBLite-Python trace database.
 
     def _create_new_execution(self, session, tag, user_function, server_version=None):
         """Define a new execution
-"""
+
+:param session: The session UUID of the execution
+:param tag: The tag of the execution
+:param user_function: The name of the function this execution defines
+:param server_version: The MonetDB server version. This might not
+                       always be available.
+
+:returns: The id (a serial number) of the new execution
+
+:raises: `mal_analytics.exceptions.MalParserError` if there is already
+        an execution with this session and tag.
+
+        """
         key = "{}:{}".format(session, tag)
         execution_id = self._execution_dict.get(key)
 
@@ -382,14 +407,13 @@ into a MonetDBLite-Python trace database.
                 LOGGER.debug("  Recording key %s", key)
                 record_key = key + ":c"
                 self._initiates_association[record_key] = current_execution_id
-                
 
     def _register_new_query(self, event_data, current_execution_id):
         initiates_executions_data = list()
         self._query_id += 1
         query_data = {
             "query_id": self._query_id,
-            "query_text": self._parse_query_text(event_data['short_statement']),  # TODO: find the value of the variable with index=1
+            "query_text": self._parse_query_text(event_data['short_statement']),
             "query_label": None,
             "root_execution_id": event_data['mal_execution_id']
         }
@@ -484,13 +508,22 @@ into a MonetDBLite-Python trace database.
         '''Parse a list of json trace objects
 
 This will create a representation ready to be inserted into the
-database.
-'''
+database. This method performs a number of actions for each event in
+the ``json_stream`` as outlined below:
+
+    1. Basic sanity checks and initial parsing of the JSON event. At this
+       stage we decide what is the execution id.
+    2.
+
+        '''
         # This is a list that we use for deduplication of variables.
         var_name_list = list()
         execution = -1
         cnt = 0
         for json_event in json_stream:
+            # Stage 1: make sure the json_event we got from the
+            # MonetDB server contains session and tag fields. These
+            # fields define the MAL execution. Parse the event and
             src = json_event.get("source")
             if src == "trace":
                 if json_event.get('session') is None:
@@ -503,7 +536,6 @@ database.
                 event_data, prereq_list, referenced_vars, event_variables, query_data, initiates_executions_data = self._parse_event(json_event)
                 execution = self._get_execution_id(json_event.get('session'), json_event.get('tag'))
                 event_data['mal_execution_id'] = execution
-                # events.append(event_data)
 
                 # Add new event to the table
                 ignored_keys = ['version']
@@ -676,7 +708,7 @@ The data is ready to be inserted into MonetDBLite.
           + val
 
         """
-        if len(self._initiates_association) > 0:
+        if self._initiates_association:
             LOGGER.warning("supervisor association table not empty: %s", self._initiates_association)
         return {
             "mal_execution": self._executions,
@@ -702,41 +734,3 @@ The data is ready to be inserted into MonetDBLite.
         del self._cpuloads
 
         self._initialize_tables()
-
-
-    # def parse_object(self, json_string):
-    #     try:
-    #         json_object = json.loads(json_string)
-    #     except json.JSONDecodeError as json_error:
-    #         LOGGER.warning("W001: Cannot parse object")
-    #         LOGGER.warning(json_string)
-    #         LOGGER.warning("Decoder reports %s", json_error)
-    #         return
-
-    #     dispatcher = {
-    #         'trace': self._parse_event,
-    #         'heartbeat': self._parse_heartbeat
-    #     }
-
-    #     source = json_object.get('source')
-    #     if source is None:
-    #         LOGGER.error("Unkown JSON object")
-    #         LOGGER.error(">%s<", json_object['source'])
-    #         return
-
-    #     try:
-    #         parse_func = dispatcher[source]
-    #     except KeyError:
-    #         # TODO raise exception?
-    #         LOGGER.error("Unkown JSON object kind: %s", source)
-    #         return
-
-    #     try:
-    #         parse_func(json_object)
-    #     except exceptions.MalParserError as e:
-    #         LOGGER.warning("Parsing JSON Object\n  %s\nfailed:\n  %s", json_object, str(e))
-    #         return
-
-    # def get_connection(self):
-    #     """Get the MonetDBLite connection"""
-    #     return self._connection
