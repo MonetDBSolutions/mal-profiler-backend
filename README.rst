@@ -8,6 +8,11 @@ Python MAL analytics
 .. image:: https://codecov.io/gh/MonetDBSolutions/mal_analytics/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/MonetDBSolutions/mal_analytics
 
+.. image:: https://www.codefactor.io/repository/github/monetdbsolutions/mal_analytics/badge/master
+   :target: https://www.codefactor.io/repository/github/monetdbsolutions/mal_analytics/overview/master
+   :alt: CodeFactor
+
+
 Introduction
 ============
 
@@ -19,4 +24,3 @@ about the queries that produced those profiling events.
 
 This is intended to be used as a back end of other programs like
 Marvin, or Malcom.
-
