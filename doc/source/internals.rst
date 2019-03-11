@@ -59,12 +59,12 @@ to the tables in the database. These are:
 
       This field is *always* present.
 
-    ``clk``
+    ``relative_time``
       Number of microseconds since server startup.
 
       This field is *always* present.
 
-    ``ctime``
+    ``absolute_time``
       Number of microseconds since server UNIX epoch.
 
       This field is *always* present.

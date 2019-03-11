@@ -96,8 +96,8 @@ class ProfilerObjectParser(object):
             "mal_execution_id": list(),
             "pc": list(),
             "execution_state": list(),
-            "clk": list(),
-            "ctime": list(),
+            "relative_time": list(),
+            "absolute_time": list(),
             "thread": list(),
             "mal_function": list(),
             "usec": list(),
@@ -319,8 +319,8 @@ class ProfilerObjectParser(object):
             "mal_execution_id": current_execution_id,
             "pc": json_object.get("pc"),
             "execution_state": self._states.get(json_object.get("state")),
-            "clk": json_object.get("clk"),
-            "ctime": json_object.get("ctime"),
+            "relative_time": json_object.get("clk"),
+            "absolute_time": json_object.get("ctime"),
             "thread": json_object.get("thread"),
             "mal_function": json_object.get("function"),
             "usec": json_object.get("usec"),
@@ -729,8 +729,8 @@ class ProfilerObjectParser(object):
                   + mal_execution_id
                   + pc
                   + execution_state
-                  + clk
-                  + ctime
+                  + relative_time
+                  + absolute_time
                   + thread
                   + mal_function
                   + usec
