@@ -40,6 +40,7 @@ class ProfilerObjectParser(object):
         self._event_id = limits.get('max_event_id', 0)
         self._variable_id = limits.get('max_variable_id', 0)
         self._heartbeat_id = limits.get('max_heartbeat_id', 0)
+        self._cpuload_id = limits.get('max_cpuload_id', 0)
         self._prerequisite_relation_id = limits.get('max_prerequisite_id', 0)
         self._query_id = limits.get('max_query_id', 0)
         self._initiates_executions_id = limits.get('max_initiates_id', 0)
@@ -612,6 +613,7 @@ class ProfilerObjectParser(object):
             # fields define the MAL execution. Parse the event and
             # keep the data around for further processing.
             src = json_event.get("source")
+            cnt += 1
             if src == "trace":
                 if json_event.get('session') is None:
                     LOGGER.error(json_event)
@@ -677,7 +679,18 @@ class ProfilerObjectParser(object):
                         for k, v in i.items():
                             self._initiates_executions.get(k).append(v)
 
-                cnt += 1
+            elif src == "heartbeat":
+                hb_data, cpu_data = self._parse_heartbeat(json_event)
+
+                for k, v in hb_data.items():
+                    self._heartbeats[k].append(v)
+
+                for c in cpu_data:
+                    for k, v in c.items():
+                        self._cpuloads[k].append(v)
+            else:
+                # TODO: raise exception
+                pass
         LOGGER.debug("%d JSON objects parsed", cnt)
         LOGGER.debug("initiates executions = %s", self._initiates_executions)
 
@@ -685,27 +698,26 @@ class ProfilerObjectParser(object):
         """Parse a heartbeat object and adds it to the database.
 
 """
-        pass
-        # cursor = self._connection.cursor()
-        # self._heartbeat_id += 1
-        # LOGGER.debug("parsing heartbeat. event id:", self._heartbeat_id)
-        # data_keys = ('server_session',
-        #              'clk',
-        #              'ctime',
-        #              'rss',
-        #              'nvcsw')
-        # data = {(k, json_object.get(k)) for k in data_keys}
-        # heartbeat_ins_qtext = """INSERT INTO heartbeat(server_session, clk,
-        #                                                ctime, rss, nvcsw)
-        #                          VALUES(%(server_session)s, %(clk)s, %(ctime)s,
-        #                                 %(rss)s, %(nvcsw)s)"""
-        # cursor.execute(heartbeat_ins_qtext, data)
-        # cpl_ins_qtext = """INSERT INTO cpuload(heartbeat_id, val)
-        #                     VALUES(%(heartbeat_id)s, %(val)s)"""
-        # for c in json_object['cpuload']:
-        #     cursor.execute(cpl_ins_qtext, {'heartbeat_id': self._heartbeat_id,
-        #                                    'val': c})
+        self._heartbeat_id += 1
+        LOGGER.debug("parsing heartbeat. event id:", self._heartbeat_id)
+        data_keys = ('clk',
+                     'ctime',
+                     'rss',
+                     'nvcsw')
+        hb_data = dict([(k, json_object.get(k)) for k in data_keys])
+        hb_data['server_session'] = json_object.get('session')
+        hb_data['heartbeat_id'] = self._heartbeat_id
 
+        cpu_data = list()
+        for c in json_object['cpuload']:
+            self._cpuload_id += 1
+            cpu_data.append({
+                "cpuload_id": self._cpuload_id,
+                "heartbeat_id": self._heartbeat_id,
+                "val": c
+            })
+
+        return (hb_data, cpu_data)
     def get_data(self):
         """Return the data that has been parsed so far.
 

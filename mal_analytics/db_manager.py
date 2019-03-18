@@ -196,6 +196,10 @@ class DatabaseManager(object, metaclass=Singleton):
               #. even ID
               #. variable ID
               #. heartbeat ID
+              #. cpuload ID
+              #. prerequisite relation ID
+              #. query ID
+              #. initiates executions ID
 
         """
 
@@ -205,6 +209,7 @@ class DatabaseManager(object, metaclass=Singleton):
             {'id_column': 'event_id', 'alias': 'max_event_id', 'table': 'profiler_event'},
             {'id_column': 'variable_id', 'alias': 'max_variable_id', 'table': 'mal_variable'},
             {'id_column': 'heartbeat_id', 'alias': 'max_heartbeat_id', 'table': 'heartbeat'},
+            {'id_column': 'cpuload_id', 'alias': 'max_cpuload_id', 'table': 'cpuload'},
             {'id_column': 'prerequisite_relation_id', 'alias': 'max_prerequisite_id', 'table': 'prerequisite_events'},
             {'id_column': 'query_id', 'alias': 'max_query_id', 'table': 'query'},
             {'id_column': 'initiates_executions_id', 'alias': 'max_initiates_id', 'table': 'initiates_executions'},
