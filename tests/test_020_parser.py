@@ -391,3 +391,51 @@ class TestParser(object):
         for table in result:
             for field in result[table]:
                 assert len(result[table][field]) == 0
+
+    def test_heartbeat_parsing(self, parser_object):
+        heartbeat_input_string = '{"source":"heartbeat","session":"edd5fb0e-9ae7-4943-bca1-68a1722a052f","clk": 46545189,"ctime":1552925625398220,"rss":81,"nvcsw":11,"state":"ping","cpuload":[0.47,0.47,0.42,0.44]}'
+        json_input = json.loads(heartbeat_input_string)
+
+        heartbeat_truth = {
+            "heartbeat_id": 1,
+            "server_session": "edd5fb0e-9ae7-4943-bca1-68a1722a052f",
+            "clk": 46545189,
+            "ctime": 1552925625398220,
+            "rss": 81,
+            "nvcsw": 11,
+        }
+        cpuinfo_truth = [
+            {
+                "cpuload_id": 1,
+                "heartbeat_id": 1,
+                "val": 0.47,
+            },
+            {
+                "cpuload_id": 2,
+                "heartbeat_id": 1,
+                "val": 0.47,
+            },
+            {
+                "cpuload_id": 3,
+                "heartbeat_id": 1,
+                "val": 0.42,
+            },
+            {
+                "cpuload_id": 4,
+                "heartbeat_id": 1,
+                "val": 0.44,
+            },
+        ]
+
+        hb, cpu = parser_object._parse_heartbeat(json_input)
+
+
+        assert len(hb) == len(heartbeat_truth)
+        for k, v in heartbeat_truth.items():
+            assert hb.get(k) == v, "heartbeat check failed for key {}".format(k)
+
+        assert len(cpuinfo_truth) == len(cpu)
+        for c in zip(cpuinfo_truth, cpu):
+            assert len(c[0]) == len(c[1])
+            for k, v in c[0].items():
+                assert c[1].get(k) == v, "cpuinfo check failed for key {}".format(k)
