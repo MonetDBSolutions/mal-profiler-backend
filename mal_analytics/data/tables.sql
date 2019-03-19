@@ -130,6 +130,22 @@ create table cpuload (
        constraint pk_cpuload primary key (cpuload_id),
        constraint fk_cl_heartbeat_id foreign key (heartbeat_id) references heartbeat(heartbeat_id)
 );
+
+CREATE VIEW instructions AS
+       SELECT
+            e.pc,
+            e.short_statement,
+            s.relative_time as start_time,
+            e.relative_time as end_time,
+            e.relative_time - s.relative_time AS duration,
+            e.thread,
+            e.mal_execution_id,
+            s.event_id as start_event_id,
+            e.event_id as end_event_id
+       FROM (SELECT * FROM profiler_event WHERE execution_state=1) AS e
+            JOIN
+            (SELECT * FROM profiler_event WHERE execution_state=0) AS s
+            ON e.pc=s.pc AND e.mal_execution_id=s.mal_execution_id ORDER BY start_time ASC;
 commit;
 
 
