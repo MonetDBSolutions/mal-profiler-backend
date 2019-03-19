@@ -29,7 +29,6 @@ class TestParser(object):
             "hghbase": None,
             "mal_value": None,
             "type_id": 20,
-            "eol": False,
             "bid": 0,
             "var_count": 0,
             "parent": None,
@@ -74,7 +73,6 @@ class TestParser(object):
                 "bid": 0,
                 "var_count": 0,
                 "var_size": 0,
-                "eol": 0
             },
             "X_2373": {
                 "variable_id": 2,
@@ -88,7 +86,6 @@ class TestParser(object):
                 "bid": 356,
                 "var_count": 100020,
                 "var_size": 400080,
-                "eol": 1
             },
             "C_394": {
                 "variable_id": 3,
@@ -98,48 +95,50 @@ class TestParser(object):
                 "bid": 186,
                 "var_count": 100020,
                 "var_size": 0,
-                "eol": 1
             },
             "X_262": {
                 "variable_id": 4,
                 "name": "X_262",
                 "type_id": 11,
                 "mal_value": "1992-12-11",
-                "eol": 0
             },
             "X_69": {
                 "variable_id": 5,
                 "name": "X_69",
                 "type_id": 10,
                 "mal_value": "\"<=\"",
-                "eol": 0
             }
         }
         event_variables_truth = [
             {
                 "event_id": 1,
                 "variable_list_index": 0,
-                "variable_id": 1
+                "variable_id": 1,
+                "eol": 0,
             },
             {
                 "event_id": 1,
                 "variable_list_index": 1,
-                "variable_id": 2
+                "variable_id": 2,
+                "eol": 1,
             },
             {
                 "event_id": 1,
                 "variable_list_index": 2,
-                "variable_id": 3
+                "variable_id": 3,
+                "eol": 1,
             },
             {
                 "event_id": 1,
                 "variable_list_index": 3,
-                "variable_id": 4
+                "variable_id": 4,
+                "eol": 0,
             },
             {
                 "event_id": 1,
                 "variable_list_index": 4,
-                "variable_id": 5
+                "variable_id": 5,
+                "eol": 0,
             },
         ]
         arg_vars_truth = ["X_2373", "C_394", "X_262", "X_69"]
@@ -227,7 +226,6 @@ class TestParser(object):
                 "var_size",
                 "seqbase",
                 "hghbase",
-                "eol",
                 "mal_value",
                 "parent",
             ],
@@ -235,6 +233,7 @@ class TestParser(object):
                 "event_id",
                 "variable_list_index",
                 "variable_id",
+                "eol",
             ],
             "query": [
                 "query_id",

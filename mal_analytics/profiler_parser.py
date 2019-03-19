@@ -128,7 +128,6 @@ class ProfilerObjectParser(object):
             "var_size": list(),
             "seqbase": list(),
             "hghbase": list(),
-            "eol": list(),
             "mal_value": list(),
             "parent": list(),
         }
@@ -137,6 +136,7 @@ class ProfilerObjectParser(object):
             "event_id": list(),
             "variable_list_index": list(),
             "variable_id": list(),
+            "eol": list(),
         }
 
         # BUG: If I remove query_text or root_execution_id
@@ -211,7 +211,6 @@ class ProfilerObjectParser(object):
             "var_size": var_data.get('size', 0),
             "seqbase": var_data.get('seqbase'),
             "hghbase": var_data.get('hghbase'),
-            "eol": var_data.get('eol') == 1,
             "mal_value": var_data.get('value'),
             "parent": var_data.get('parent'),
             "list_index": var_data.get('index')
@@ -358,7 +357,8 @@ class ProfilerObjectParser(object):
                 event_variables.append({
                     "event_id": self._event_id,
                     "variable_list_index": parsed_var.get('list_index'),
-                    "variable_id": parsed_var.get('variable_id')
+                    "variable_id": parsed_var.get('variable_id'),
+                    "eol": item.get('eol') == 1,
                 })
 
         # Handle the initiates execution relation:
@@ -660,6 +660,7 @@ class ProfilerObjectParser(object):
                     self._event_variables['variable_list_index'].append(evariable.get('variable_list_index'))
                     # NOTE: this violates the foreign key. Why?
                     self._event_variables['variable_id'].append(evariable.get('variable_id'))
+                    self._event_variables['eol'].append(evariable.get('eol', False))
 
 
                 for pev in prereq_list:
@@ -699,7 +700,7 @@ class ProfilerObjectParser(object):
 
 """
         self._heartbeat_id += 1
-        LOGGER.debug("parsing heartbeat. event id:", self._heartbeat_id)
+        LOGGER.debug("parsing heartbeat. event id: %d", self._heartbeat_id)
         data_keys = ('clk',
                      'ctime',
                      'rss',

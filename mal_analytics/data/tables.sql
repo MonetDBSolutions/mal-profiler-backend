@@ -70,7 +70,6 @@ create table mal_variable (
        var_size int,
        seqbase int,
        hghbase int,
-       eol bool,
        mal_value text,
        parent int,
 
@@ -84,6 +83,7 @@ create table event_variable_list (
        event_id bigint,
        variable_list_index int,
        variable_id bigint,
+       eol bool,
 
        constraint pk_event_variable_list primary key (event_id, variable_list_index),
        constraint fk_evl_event_id foreign key (event_id) references profiler_event(event_id),
