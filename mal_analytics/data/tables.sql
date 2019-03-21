@@ -141,7 +141,9 @@ CREATE VIEW instructions AS
             e.thread,
             e.mal_execution_id,
             s.event_id as start_event_id,
-            e.event_id as end_event_id
+            e.event_id as end_event_id,
+            e.mal_module,
+            e.instruction
        FROM (SELECT * FROM profiler_event WHERE execution_state=1) AS e
             JOIN
             (SELECT * FROM profiler_event WHERE execution_state=0) AS s
