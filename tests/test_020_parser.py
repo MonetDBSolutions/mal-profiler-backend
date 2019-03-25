@@ -438,3 +438,17 @@ class TestParser(object):
             assert len(c[0]) == len(c[1])
             for k, v in c[0].items():
                 assert c[1].get(k) == v, "cpuinfo check failed for key {}".format(k)
+
+    def test_parse_variable_persistence(self, parser_object, query_trace1):
+        persistent_vars = 70
+
+        parser_object.parse_trace_stream(query_trace1)
+
+        result = parser_object.get_data()
+
+        count = 0
+        for persistent in result['mal_variable']['is_persistent']:
+            if persistent:
+                count += 1
+
+        assert persistent_vars == count, "Wrong number of persistent variables"
