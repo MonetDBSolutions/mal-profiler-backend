@@ -343,6 +343,12 @@ class ProfilerObjectParser(object):
         # The following process applies equally well to both the
         # return values and the arguments of the MAL instruction.
         for var_kind in ["ret", "arg"]:
+            # We process return values only on "done" events. On
+            # "start" events we are missing a lot of details (size,
+            # persistent or transient, etc), that are available at
+            # "done" events.
+            if var_kind=="ret" and event_data['execution_state'] == self._states.get("start"):
+                continue
             for item in json_object.get(var_kind, []):
                 # First, parse the variable
                 parsed_var = self._parse_variable(item, current_execution_id)
