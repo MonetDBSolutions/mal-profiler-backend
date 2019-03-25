@@ -376,7 +376,7 @@ class ProfilerObjectParser(object):
         # Finally, if the mal module is "user" we are calling a user
         # defined function.
         elif event_data['mal_module'] == 'user' and event_data['execution_state'] == 0:
-            LOGGER.debug("\n  event data['instruction'] = %s\n  event_data['short_statement'] = %s\n  current execution = %d", event_data.get('instruction'), event_data.get('short_statement'), current_execution_id)
+            # LOGGER.debug("\n  event data['instruction'] = %s\n  event_data['short_statement'] = %s\n  current execution = %d", event_data.get('instruction'), event_data.get('short_statement'), current_execution_id)
             self._handle_local_initiates(event_data, current_execution_id, initiates_executions_data)
 
         return (
@@ -438,10 +438,10 @@ class ProfilerObjectParser(object):
 
         # We are defining a function...
         if event_data['short_statement'].startswith('function'):
-            LOGGER.debug("Defining")
+            # LOGGER.debug("Defining")
             lookup_key = key + ":c"  # ...so we look up the *call* of the function
             if lookup_key in self._initiates_association:
-                LOGGER.debug("  Resolving key %s", key)
+                # LOGGER.debug("  Resolving key %s", key)
                 self._initiates_executions_id += 1
                 initiates_executions_data.append({
                     "initiates_executions_id": self._initiates_executions_id,
@@ -451,15 +451,15 @@ class ProfilerObjectParser(object):
                 })
                 del self._initiates_association[lookup_key]
             else:
-                LOGGER.debug("  Recording key %s", key)
+                # LOGGER.debug("  Recording key %s", key)
                 record_key = key + ":d"
                 self._initiates_association[record_key] = current_execution_id
         else:
             # We are calling a function...
-            LOGGER.debug("Calling")
+            # LOGGER.debug("Calling")
             lookup_key = key + ":d"  # ...so we look up the *definition* of the function
             if lookup_key in self._initiates_association:
-                LOGGER.debug("  Resolving key %s", key)
+                # LOGGER.debug("  Resolving key %s", key)
                 self._initiates_executions_id += 1
                 initiates_executions_data.append ({
                     "initiates_executions_id": self._initiates_executions_id,
@@ -469,7 +469,7 @@ class ProfilerObjectParser(object):
                 })
                 del self._initiates_association[lookup_key]
             else:
-                LOGGER.debug("  Recording key %s", key)
+                # LOGGER.debug("  Recording key %s", key)
                 record_key = key + ":c"
                 self._initiates_association[record_key] = current_execution_id
 
@@ -482,7 +482,7 @@ class ProfilerObjectParser(object):
             "query_label": None,
             "root_execution_id": event_data['mal_execution_id']
         }
-        LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
+        # LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
         # An execution with a call to querylog.define supervises
         # itself
         self._initiates_executions_id += 1
