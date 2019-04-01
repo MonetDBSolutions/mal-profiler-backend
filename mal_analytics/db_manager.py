@@ -148,7 +148,7 @@ class DatabaseManager(object, metaclass=Singleton):
         stmt = list()
         for ln in sql_in:
             cline = ln.strip()
-            if ln.startswith('--') or len(cline) == 0:
+            if cline.startswith('--') or len(cline) == 0:
                 continue
 
             stmt.append(cline)
