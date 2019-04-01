@@ -136,6 +136,7 @@ class ProfilerObjectParser(object):
             "event_id": list(),
             "variable_list_index": list(),
             "variable_id": list(),
+            "created": list(),
             "eol": list(),
         }
 
@@ -364,7 +365,15 @@ class ProfilerObjectParser(object):
                     "event_id": self._event_id,
                     "variable_list_index": parsed_var.get('list_index'),
                     "variable_id": parsed_var.get('variable_id'),
-                    "eol": item.get('eol') == 1,
+                    "eol": item.get('eol') == 1 and event_data['execution_state'] == self._states.get("done"),
+                    # NOTE: The following assumes that variables are
+                    # created when assigned for the first time and
+                    # that no more assignments are possible. Probably
+                    # this assumption will be violated. We need to
+                    # issue a warning when this happens, and so we
+                    # need to keep track of all the variables created
+                    # so far in this execution.
+                    "created": var_kind=="ret",
                 })
 
         # Handle the initiates execution relation:
@@ -666,6 +675,7 @@ class ProfilerObjectParser(object):
                     self._event_variables['variable_list_index'].append(evariable.get('variable_list_index'))
                     # NOTE: this violates the foreign key. Why?
                     self._event_variables['variable_id'].append(evariable.get('variable_id'))
+                    self._event_variables['created'].append(evariable.get('created'))
                     self._event_variables['eol'].append(evariable.get('eol', False))
 
 

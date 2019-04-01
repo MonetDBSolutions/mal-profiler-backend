@@ -127,7 +127,6 @@ class TestParser(object):
             },
         ]
         arg_vars_truth = ["X_2373", "C_394", "X_262", "X_69"]
-        ret_vars_truth = ["C_2622"]
 
         assert len(event_data) == len(event_data_truth)
         for k, v in event_data_truth.items():
@@ -218,6 +217,7 @@ class TestParser(object):
                 "event_id",
                 "variable_list_index",
                 "variable_id",
+                "created",
                 "eol",
             ],
             "query": [
@@ -274,7 +274,7 @@ class TestParser(object):
 
         for table in result:
             for field in result[table]:
-                assert len(result[table][field]) == truth[table], "Check failed for table '{}'".format(table)
+                assert len(result[table][field]) == truth[table], "Check failed for field '{}.{}'".format(table, field)
 
     def test_parse_multiple_traces(self, parser_object, query_trace1, query_trace2):
         truth = {
@@ -437,3 +437,5 @@ class TestParser(object):
                 count += 1
 
         assert persistent_vars == count, "Wrong number of persistent variables"
+
+    # def test_variable_creation

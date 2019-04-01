@@ -6,6 +6,7 @@ start transaction;
 
 create table mal_execution (
        execution_id bigint,
+       -- the type of the following should be UUID
        server_session char(36) not null,
        tag int not null,
        server_version char(120),
@@ -83,6 +84,7 @@ create table event_variable_list (
        event_id bigint,
        variable_list_index int,
        variable_id bigint,
+       created bool,
        eol bool,
 
        constraint pk_event_variable_list primary key (event_id, variable_list_index),
