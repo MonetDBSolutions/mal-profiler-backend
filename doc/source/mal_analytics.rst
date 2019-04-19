@@ -17,7 +17,6 @@ mal\_analytics.profiler\_parser module
 
 .. automodule:: mal_analytics.profiler_parser
     :members:
-    :private-members:   
     :undoc-members:
     :show-inheritance:
 
