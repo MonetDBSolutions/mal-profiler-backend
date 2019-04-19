@@ -4,6 +4,8 @@
 #
 # Copyright MonetDB Solutions B.V. 2018-2019
 
+from io import StringIO
+import json
 import logging
 import os
 import tempfile
@@ -12,6 +14,7 @@ import monetdblite
 
 from mal_analytics.exceptions import InitializationError
 from mal_analytics.exceptions import DatabaseManagerError
+from mal_analytics.exceptions import AnalyticsException
 from mal_analytics.profiler_parser import ProfilerObjectParser
 
 LOGGER = logging.getLogger(__name__)
@@ -263,3 +266,45 @@ class DatabaseManager(object, metaclass=Singleton):
 
     def rollback(self):  # pragma: no coverage
         self._connection.rollback()
+
+    def _read_object(self, lines):
+        buf = []
+        for ln in lines:
+            buf.append(ln)
+            if ln.endswith(u'}\n'):
+                json_string = ''.join(buf).strip()
+                return json_string
+                # print(json_string)
+
+    def parse_trace(self, contents):
+        """Parse a string representing a MonetDB profiler trace.
+
+           Args:
+               contents:
+        """
+        pob = self.create_parser()
+
+        with StringIO(contents) as fl:
+            json_stream = list()
+            json_string = self._read_object(fl)
+            while json_string:
+                try:
+                    json_stream.append(json.loads(json_string))
+                except Exception as e:
+                    LOGGER.error("JSON parser failed:\n %s", e)
+                    raise
+                json_string = self._read_object(fl)
+
+
+        pob.parse_trace_stream(json_stream)
+        self.transaction()
+        try:
+            self.drop_constraints()
+            for table, data in pob.get_data().items():
+                self.insert_data(table, data)
+            self.add_constraints()
+        except AnalyticsException as e:
+            LOGGER.error(e)
+            self.rollback()
+        self.commit()
+        pob.clear_internal_state()
