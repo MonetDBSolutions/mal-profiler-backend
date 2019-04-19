@@ -58,4 +58,7 @@ ALTER TABLE heartbeat ADD
     CONSTRAINT pk_heartbeat PRIMARY KEY (heartbeat_id);
 
 ALTER TABLE cpuload ADD
-    constraint fk_cl_heartbeat_id foreign key (heartbeat_id) references heartbeat(heartbeat_id);
+    CONSTRAINT fk_cl_heartbeat_id FOREIGN KEY (heartbeat_id) REFERENCES heartbeat(heartbeat_id);
+
+-- ALTER TABLE trace ADD
+--     CONSTRAINT trace_id_pk PRIMARY KEY (trace_id);

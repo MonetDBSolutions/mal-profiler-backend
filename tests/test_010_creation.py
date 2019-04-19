@@ -26,7 +26,8 @@ class TestCreation(object):
             'query',
             'initiates_executions',
             'heartbeat',
-            'cpuload'
+            'cpuload',
+            # 'trace'
         ]
         for tbl in tables:
             rslt = cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)

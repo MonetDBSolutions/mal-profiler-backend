@@ -66,3 +66,6 @@ ALTER TABLE mal_type
 
 ALTER TABLE heartbeat
     DROP CONSTRAINT pk_heartbeat;
+
+-- ALTER TABLE trace
+--     DROP CONSTRAINT trace_id_pk;

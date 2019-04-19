@@ -150,6 +150,14 @@ CREATE VIEW instructions AS
             JOIN
             (SELECT * FROM profiler_event WHERE execution_state=0) AS s
             ON e.pc=s.pc AND e.mal_execution_id=s.mal_execution_id ORDER BY start_time ASC;
+
+-- create table trace (
+--        trace_id bigint,
+--        trace_path varchar(255) not null,
+
+--        constraint trace_id_pk primary key (trace_id)
+-- );
+
 commit;
 
 
