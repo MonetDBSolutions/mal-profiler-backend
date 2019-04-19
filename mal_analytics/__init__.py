@@ -4,7 +4,6 @@
 #
 # Copyright MonetDB Solutions B.V. 2018-2019
 
-from mal_analytics import profiler_parser
 from mal_analytics import trace_reader
 
 from mal_analytics.profiler_parser import ProfilerObjectParser
