@@ -284,6 +284,7 @@ class DatabaseManager(object, metaclass=Singleton):
         """
         pob = self.create_parser()
 
+        LOGGER.debug("Ingesting trace: %d", len(contents))
         with StringIO(contents) as fl:
             json_stream = list()
             json_string = self._read_object(fl)
@@ -294,8 +295,9 @@ class DatabaseManager(object, metaclass=Singleton):
                     LOGGER.error("JSON parser failed:\n %s", e)
                     raise
                 json_string = self._read_object(fl)
+        LOGGER.debug("Ingesting trace done")
 
-
+        LOGGER.debug("Parsing trace..")
         pob.parse_trace_stream(json_stream)
         self.transaction()
         try:
@@ -306,5 +308,7 @@ class DatabaseManager(object, metaclass=Singleton):
         except AnalyticsException as e:
             LOGGER.error(e)
             self.rollback()
+            raise
         self.commit()
         pob.clear_internal_state()
+        LOGGER.debug("Parsing trace done")
