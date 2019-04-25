@@ -100,6 +100,9 @@ class DatabaseManager(object, metaclass=Singleton):
                 LOGGER.error("Did not find table %s in database %s", tbl, self.get_dbpath)
                 raise InitializationError("Database {} did not initialize properly (table {} not found)".format(self.get_dbpath, tbl))
 
+        # TODO: Remove this after debugging.
+        self.drop_constraints()
+
     def _disconnect(self):
         self._connection.close()
         self._connection = None
@@ -301,10 +304,10 @@ class DatabaseManager(object, metaclass=Singleton):
         pob.parse_trace_stream(json_stream)
         self.transaction()
         try:
-            self.drop_constraints()
+            # self.drop_constraints()
             for table, data in pob.get_data().items():
                 self.insert_data(table, data)
-            self.add_constraints()
+            # self.add_constraints()
         except AnalyticsException as e:
             LOGGER.error(e)
             self.rollback()
