@@ -100,9 +100,6 @@ class DatabaseManager(object, metaclass=Singleton):
                 LOGGER.error("Did not find table %s in database %s", tbl, self.get_dbpath)
                 raise InitializationError("Database {} did not initialize properly (table {} not found)".format(self.get_dbpath, tbl))
 
-        # TODO: Remove this after debugging.
-        self.drop_constraints()
-
     def _disconnect(self):
         self._connection.close()
         self._connection = None
@@ -304,14 +301,56 @@ class DatabaseManager(object, metaclass=Singleton):
         pob.parse_trace_stream(json_stream)
         self.transaction()
         try:
-            # self.drop_constraints()
+            self.drop_constraints()
             for table, data in pob.get_data().items():
                 self.insert_data(table, data)
-            # self.add_constraints()
-        except AnalyticsException as e:
+
+        except AnalyticsException as ae:
+            LOGGER.error(ae)
+            self.rollback()
+            raise
+
+        try:
+            self._enforce_constraints()
+            self.add_constraints()
+        except Exception as e:
+            LOGGER.error("Constraint enforcement failed:")
             LOGGER.error(e)
             self.rollback()
             raise
+
         self.commit()
         pob.clear_internal_state()
         LOGGER.debug("Parsing trace done")
+
+    def _enforce_constraints(self):
+        cursor = self._connection.cursor()
+        violations = 0
+
+        # Find all profiler events that violate the
+        # unique_pe_profiler_event and move them to the
+        # rejected_profiler_event.
+        event_uniqness_query = "SELECT r.event_id FROM profiler_event as l JOIN profiler_event as r ON l.execution_state=r.execution_state AND l.mal_execution_id=r.mal_execution_id AND l.pc=r.pc AND l.event_id<>r.event_id WHERE l.event_id < r.event_id"
+
+        non_unique_events = cursor.execute(event_uniqness_query)
+
+        LOGGER.debug("Non unique events: %d", non_unique_events)
+        # some non-uniqe events
+        if non_unique_events > 0:
+            violations += non_unique_events
+            # numpy.int64 cannot be used correctly with execute[many],
+            # so convert these to normal ints. It is desirable to not
+            # have to do this so should this be reported as a
+            # MonetDBLite feature request/BUG?
+            events = [[int(eid)] for eid_lst in cursor.fetchall() for eid in eid_lst]
+            cursor.executemany("INSERT INTO rejected_profiler_event (SELECT * FROM profiler_event, (SELECT 'Violates unique_pe_profiler_event constraint') as rejection_reason WHERE event_id=%s)", events)
+
+            cursor.executemany("DELETE FROM profiler_event WHERE event_id=%s", events)
+            cursor.executemany("DELETE FROM prerequisite_events WHERE prerequisite_event=%s", events)
+            cursor.executemany("DELETE FROM prerequisite_events WHERE consequent_event=%s", events)
+
+            cursor.executemany("DELETE FROM event_variable_list WHERE event_id=%s", events)
+
+
+        # Other possible violations that might arise in the future
+        return violations

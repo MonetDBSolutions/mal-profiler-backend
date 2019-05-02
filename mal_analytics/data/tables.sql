@@ -158,6 +158,25 @@ CREATE VIEW instructions AS
 --        constraint trace_id_pk primary key (trace_id)
 -- );
 
+create table rejected_profiler_event (
+       event_id bigint,
+       mal_execution_id bigint,
+       pc int,
+       execution_state tinyint,
+       relative_time bigint,
+       absolute_time bigint,
+       thread int,
+       mal_function text,
+       usec int,
+       rss int,
+       type_size int,
+       long_statement text,
+       short_statement text,
+       instruction text,
+       mal_module text,
+       rejection_reason text
+);
+
 commit;
 
 
