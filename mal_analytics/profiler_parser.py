@@ -716,7 +716,7 @@ class ProfilerObjectParser(object):
 
 """
         self._heartbeat_id += 1
-        LOGGER.debug("parsing heartbeat. event id: %d", self._heartbeat_id)
+        # LOGGER.debug("parsing heartbeat. event id: %d", self._heartbeat_id)
         data_keys = ('clk',
                      'ctime',
                      'rss',
