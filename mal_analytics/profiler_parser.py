@@ -49,6 +49,7 @@ class ProfilerObjectParser(object):
         self._var_name_to_id = dict()
         self._execution_dict = dict()
         self._states = {'start': 0, 'done': 1, 'pause': 2}
+        self._tables = None
 
         self._initialize_tables()
 
@@ -84,7 +85,8 @@ class ProfilerObjectParser(object):
     def _initialize_tables(self):
         """Initialize dictionaries that map directly to the db tables.
         """
-        self._executions = {
+        self._tables = dict()
+        self._tables["mal_execution"] = {
             "execution_id": list(),
             "server_session": list(),
             "tag": list(),
@@ -92,7 +94,7 @@ class ProfilerObjectParser(object):
             "user_function": list(),
         }
 
-        self._events = {
+        self._tables["profiler_event"] = {
             "event_id": list(),
             "mal_execution_id": list(),
             "pc": list(),
@@ -110,13 +112,13 @@ class ProfilerObjectParser(object):
             "mal_module": list(),
         }
 
-        self._prerequisite_events = {
+        self._tables["prerequisite_events"] = {
             "prerequisite_relation_id": list(),
             "prerequisite_event": list(),
             "consequent_event": list(),
         }
 
-        self._variables = {
+        self._tables["mal_variable"] = {
             "variable_id": list(),
             "name": list(),
             "mal_execution_id": list(),
@@ -132,7 +134,7 @@ class ProfilerObjectParser(object):
             "parent": list(),
         }
 
-        self._event_variables = {
+        self._tables["event_variable_list"] = {
             "event_id": list(),
             "variable_list_index": list(),
             "variable_id": list(),
@@ -143,21 +145,21 @@ class ProfilerObjectParser(object):
         # BUG: If I remove query_text or root_execution_id
         # test_limits_full_db coredumps on manager.insert_data
         # (monetdblite.insert?).
-        self._query = {
+        self._tables["query"] = {
             "query_id": list(),
             "query_text": list(),
             "query_label": list(),
             "root_execution_id": list(),
         }
 
-        self._initiates_executions = {
+        self._tables["initiates_executions"] = {
             "initiates_executions_id": list(),
             "parent_id": list(),
             "child_id": list(),
             "remote": list ()
         }
 
-        self._heartbeats = {
+        self._tables["heartbeat"] = {
             "heartbeat_id": list(),
             "server_session": list(),
             "clk": list(),
@@ -166,12 +168,11 @@ class ProfilerObjectParser(object):
             "nvcsw": list(),
         }
 
-        self._cpuloads = {
+        self._tables["cpuload"] = {
             "cpuload_id": list(),
             "heartbeat_id": list(),
             "val": list(),
         }
-
 
     def _parse_variable(self, var_data, current_execution_id):
         """Parse a single MAL variable.
@@ -348,7 +349,7 @@ class ProfilerObjectParser(object):
             # "start" events we are missing a lot of details (size,
             # persistent or transient, etc), that are available at
             # "done" events.
-            if var_kind=="ret" and event_data['execution_state'] == self._states.get("start"):
+            if var_kind == "ret" and event_data['execution_state'] == self._states.get("start"):
                 continue
             for item in json_object.get(var_kind, []):
                 # First, parse the variable
@@ -373,7 +374,7 @@ class ProfilerObjectParser(object):
                     # issue a warning when this happens, and so we
                     # need to keep track of all the variables created
                     # so far in this execution.
-                    "created": var_kind=="ret",
+                    "created": var_kind == "ret",
                 })
 
         # Handle the initiates execution relation:
@@ -431,19 +432,19 @@ class ProfilerObjectParser(object):
             self._execution_dict[key] = execution_id
 
             # Add the new execution to the table.
-            self._executions['execution_id'].append(execution_id)
-            self._executions['server_session'].append(session)
-            self._executions['tag'].append(tag)
-            self._executions['user_function'].append(user_function)
-            self._executions['server_version'].append(server_version)
+            self._tables["mal_execution"]['execution_id'].append(execution_id)
+            self._tables["mal_execution"]['server_session'].append(session)
+            self._tables["mal_execution"]['tag'].append(tag)
+            self._tables["mal_execution"]['user_function'].append(user_function)
+            self._tables["mal_execution"]['server_version'].append(server_version)
 
             return execution_id
         else:
             raise exceptions.MalParserError("execution for session {}, tag {} already registered".format(session, tag))
 
     def _handle_local_initiates(self, event_data, current_execution_id, initiates_executions_data):
-        idx = self._executions["execution_id"].index(current_execution_id)
-        server_session = self._executions["server_session"][idx]
+        idx = self._tables["mal_execution"]["execution_id"].index(current_execution_id)
+        server_session = self._tables["mal_execution"]["server_session"][idx]
 
         # We are concatenating the server_session with the function
         # name. We are assuming that the function calls are local
@@ -495,8 +496,9 @@ class ProfilerObjectParser(object):
             "query_id": self._query_id,
             "query_text": self._parse_query_text(event_data['short_statement']),
             "query_label": None,
-            "root_execution_id": event_data['mal_execution_id']
+            "root_execution_id": current_execution_id
         }
+        # LOGGER.warning("Executions: %s", self._execution_dict)
         # LOGGER.debug('Adding query {}, id: {}'.format(query_data['query_text'], query_data['query_id']))
         # An execution with a call to querylog.define supervises
         # itself
@@ -647,7 +649,7 @@ class ProfilerObjectParser(object):
                 for k, v in event_data.items():
                     if k in ignored_keys:
                         continue
-                    self._events[k].append(v)
+                    self._tables["profiler_event"][k].append(v)
 
                 # Stage 2: Handle the referenced variables.
                 for var_name, var in referenced_vars.items():
@@ -668,53 +670,51 @@ class ProfilerObjectParser(object):
                     for k, v in var.items():
                         if k in ignored_keys:
                             continue
-                        self._variables[k].append(v)
+                        self._tables["mal_variable"][k].append(v)
 
                 for evariable in event_variables:
-                    self._event_variables['event_id'].append(evariable.get('event_id'))
-                    self._event_variables['variable_list_index'].append(evariable.get('variable_list_index'))
+                    self._tables["event_variable_list"]['event_id'].append(evariable.get('event_id'))
+                    self._tables["event_variable_list"]['variable_list_index'].append(evariable.get('variable_list_index'))
                     # NOTE: this violates the foreign key. Why?
-                    self._event_variables['variable_id'].append(evariable.get('variable_id'))
-                    self._event_variables['created'].append(evariable.get('created'))
-                    self._event_variables['eol'].append(evariable.get('eol', False))
-
+                    self._tables["event_variable_list"]['variable_id'].append(evariable.get('variable_id'))
+                    self._tables["event_variable_list"]['created'].append(evariable.get('created'))
+                    self._tables["event_variable_list"]['eol'].append(evariable.get('eol', False))
 
                 for pev in prereq_list:
                     self._prerequisite_relation_id += 1
-                    self._prerequisite_events['prerequisite_relation_id'].append(self._prerequisite_relation_id)
-                    self._prerequisite_events['prerequisite_event'].append(pev)
-                    self._prerequisite_events['consequent_event'].append(event_data['event_id'])
+                    self._tables["prerequisite_events"]['prerequisite_relation_id'].append(self._prerequisite_relation_id)
+                    self._tables["prerequisite_events"]['prerequisite_event'].append(pev)
+                    self._tables["prerequisite_events"]['consequent_event'].append(event_data['event_id'])
 
                     # prerequisite_events.append((pev, event_data['event_id']))
 
                 if query_data is not None:
                     for k, v in query_data.items():
-                        self._query.get(k).append(v)
+                        self._tables["query"].get(k).append(v)
 
                 if initiates_executions_data is not None:
                     for i in initiates_executions_data:
                         for k, v in i.items():
-                            self._initiates_executions.get(k).append(v)
+                            self._tables["initiates_executions"].get(k).append(v)
 
             elif src == "heartbeat":
                 hb_data, cpu_data = self._parse_heartbeat(json_event)
 
                 for k, v in hb_data.items():
-                    self._heartbeats[k].append(v)
+                    self._tables["heartbeat"][k].append(v)
 
                 for c in cpu_data:
                     for k, v in c.items():
-                        self._cpuloads[k].append(v)
+                        self._tables["cpuload"][k].append(v)
             else:
                 # TODO: raise exception
                 pass
         LOGGER.debug("%d JSON objects parsed", cnt)
-        LOGGER.debug("initiates executions = %s", self._initiates_executions)
+        LOGGER.debug("initiates executions = %s", self._tables["initiates_executions"])
 
     def _parse_heartbeat(self, json_object):
         """Parse a heartbeat object and adds it to the database.
-
-"""
+        """
         self._heartbeat_id += 1
         # LOGGER.debug("parsing heartbeat. event id: %d", self._heartbeat_id)
         data_keys = ('clk',
@@ -735,6 +735,7 @@ class ProfilerObjectParser(object):
             })
 
         return (hb_data, cpu_data)
+
     def get_data(self):
         """Return the data that has been parsed so far.
 
@@ -827,27 +828,11 @@ class ProfilerObjectParser(object):
         """
         if self._initiates_association:
             LOGGER.warning("supervisor association table not empty: %s", self._initiates_association)
-        return {
-            "mal_execution": self._executions,
-            "profiler_event": self._events,
-            "prerequisite_events": self._prerequisite_events,
-            "mal_variable": self._variables,
-            "event_variable_list": self._event_variables,
-            "query": self._query,
-            "initiates_executions": self._initiates_executions,
-            "heartbeat": self._heartbeats,
-            "cpuload": self._cpuloads
-        }
+        return self._tables
 
     def clear_internal_state(self):
         """Clear the internal dictionaries.
         """
-        del self._executions
-        del self._events
-        del self._prerequisite_events
-        del self._variables
-        del self._event_variables
-        del self._heartbeats
-        del self._cpuloads
+        self._tables = None
 
         self._initialize_tables()
