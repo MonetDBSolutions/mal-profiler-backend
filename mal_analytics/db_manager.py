@@ -8,7 +8,6 @@ from io import StringIO
 import json
 import logging
 import os
-import tempfile
 
 import monetdblite
 
@@ -252,7 +251,6 @@ class DatabaseManager(object, metaclass=Singleton):
         drop_file = os.path.join(cpath, 'data', 'drop_constraints.sql')
         self.execute_sql_script(drop_file)
 
-
     def add_constraints(self):
         cpath = os.path.dirname(os.path.abspath(__file__))
         add_file = os.path.join(cpath, 'data', 'add_constraints.sql')
@@ -350,7 +348,6 @@ class DatabaseManager(object, metaclass=Singleton):
             cursor.executemany("DELETE FROM prerequisite_events WHERE consequent_event=%s", events)
 
             cursor.executemany("DELETE FROM event_variable_list WHERE event_id=%s", events)
-
 
         # Other possible violations that might arise in the future
         return violations
