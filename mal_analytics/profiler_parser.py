@@ -6,6 +6,7 @@
 
 import logging
 import re
+from pathlib import Path
 
 import mal_analytics.exceptions as exceptions
 
@@ -834,5 +835,17 @@ class ProfilerObjectParser(object):
         """Clear the internal dictionaries.
         """
         self._tables = None
-
         self._initialize_tables()
+
+    def to_csv(self, directory):  # pragma: no coverage
+        """Write the tables to CSVs
+
+        This will be useful mostly for debugging, and will probably be expensive.
+        """
+        for k, v in self._tables.items():
+            current_file = Path(directory) / (k + ".csv")
+            with open(current_file, "w") as fl:
+                transpose = zip(*v.values())  # creates a list of tuples as they appear in a SQL relation
+                for tup in transpose:
+                    fl.write("|".join(map(str, tup)))
+                    fl.write("\n")

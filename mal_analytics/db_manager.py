@@ -297,6 +297,9 @@ class DatabaseManager(object, metaclass=Singleton):
 
         LOGGER.debug("Parsing trace..")
         pob.parse_trace_stream(json_stream)
+        LOGGER.debug("Writing tables to CSVs...")
+        pob.to_csv("/tmp/traces")
+        LOGGER.debug("Done")
         self.transaction()
         try:
             self.drop_constraints()
