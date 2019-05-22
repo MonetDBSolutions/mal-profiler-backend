@@ -127,7 +127,7 @@ create table heartbeat (
 create table cpuload (
        cpuload_id bigint,
        heartbeat_id bigint,
-       val decimal(3, 2),
+       val double,
 
        constraint pk_cpuload primary key (cpuload_id),
        constraint fk_cl_heartbeat_id foreign key (heartbeat_id) references heartbeat(heartbeat_id)

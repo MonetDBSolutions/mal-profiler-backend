@@ -5,7 +5,9 @@ name = "pypi"
 
 [packages]
 mal_analytics = {path = ".",editable = true}
-monetdblite = ">=0.6.3"
+ipython = "*"
+monetdblite = {editable = true,path = "./../../mdbl-repos/MonetDBLite-Python"}
+trepan3k = "*"
 
 [dev-packages]
 ipython = "*"
