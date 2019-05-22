@@ -139,6 +139,8 @@ CREATE VIEW instructions AS
             e.short_statement,
             s.relative_time as start_time,
             e.relative_time as end_time,
+            s.absolute_time as astart_time,
+            e.absolute_time as aend_time,
             e.relative_time - s.relative_time AS duration,
             e.thread,
             e.mal_execution_id,
