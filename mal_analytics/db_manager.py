@@ -31,7 +31,8 @@ class Singleton(type):
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(Singleton,
+                                        cls).__call__(*args, **kwargs)
 
         obj = cls._instances[cls]
         if not obj.is_connected():
@@ -78,7 +79,8 @@ class DatabaseManager(object, metaclass=Singleton):
         cursor = self.get_cursor()
         rslt = 0
         for tbl in tables:
-            rslt += cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)
+            rslt += cursor.execute("SELECT id FROM _tables WHERE name =%s",
+                                   tbl)
 
         # All the tables already exist
         if rslt == len(tables):
@@ -97,8 +99,11 @@ class DatabaseManager(object, metaclass=Singleton):
             rslt = cursor.execute("SELECT id FROM _tables WHERE name =%s", tbl)
             # This should never happen
             if rslt != 1:
-                LOGGER.error("Did not find table %s in database %s", tbl, self.get_dbpath)
-                raise InitializationError("Database {} did not initialize properly (table {} not found)".format(self.get_dbpath, tbl))
+                LOGGER.error("Did not find table %s in database %s", tbl,
+                             self.get_dbpath)
+                raise InitializationError(
+                    "Database {} did not initialize properly (table {} not found)"
+                    .format(self.get_dbpath, tbl))
 
     def _disconnect(self):
         self._connection.close()
@@ -123,13 +128,16 @@ class DatabaseManager(object, metaclass=Singleton):
         """
         cursor = self._connection.cursor()
         try:
-            LOGGER.debug("executing query\n %s\n with parameters\n %s", query, params)
+            LOGGER.debug("executing query\n %s\n with parameters\n %s", query,
+                         params)
             cursor.execute(query, params)
             results = cursor.fetchnumpy()
             # TODO: consider adding verbosity parameter
             # LOGGER.debug("results\n %s", results)
         except monetdblite.Error as e:
-            LOGGER.warning("query\n  %s\n with parameters\n %s failed with message: %s", query, params, e)
+            LOGGER.warning(
+                "query\n  %s\n with parameters\n %s failed with message: %s",
+                query, params, e)
             # TODO: consider raising an exception
             results = None
 
@@ -208,17 +216,53 @@ class DatabaseManager(object, metaclass=Singleton):
 
         query_template = "SELECT MAX({id_column}) AS {alias} FROM {table}"
         queries = [
-            {'id_column': 'execution_id', 'alias': 'max_execution_id', 'table': 'mal_execution'},
-            {'id_column': 'event_id', 'alias': 'max_event_id', 'table': 'profiler_event'},
-            {'id_column': 'variable_id', 'alias': 'max_variable_id', 'table': 'mal_variable'},
-            {'id_column': 'heartbeat_id', 'alias': 'max_heartbeat_id', 'table': 'heartbeat'},
-            {'id_column': 'cpuload_id', 'alias': 'max_cpuload_id', 'table': 'cpuload'},
-            {'id_column': 'prerequisite_relation_id', 'alias': 'max_prerequisite_id', 'table': 'prerequisite_events'},
-            {'id_column': 'query_id', 'alias': 'max_query_id', 'table': 'query'},
-            {'id_column': 'initiates_executions_id', 'alias': 'max_initiates_id', 'table': 'initiates_executions'},
+            {
+                'id_column': 'execution_id',
+                'alias': 'max_execution_id',
+                'table': 'mal_execution'
+            },
+            {
+                'id_column': 'event_id',
+                'alias': 'max_event_id',
+                'table': 'profiler_event'
+            },
+            {
+                'id_column': 'variable_id',
+                'alias': 'max_variable_id',
+                'table': 'mal_variable'
+            },
+            {
+                'id_column': 'heartbeat_id',
+                'alias': 'max_heartbeat_id',
+                'table': 'heartbeat'
+            },
+            {
+                'id_column': 'cpuload_id',
+                'alias': 'max_cpuload_id',
+                'table': 'cpuload'
+            },
+            {
+                'id_column': 'prerequisite_relation_id',
+                'alias': 'max_prerequisite_id',
+                'table': 'prerequisite_events'
+            },
+            {
+                'id_column': 'query_id',
+                'alias': 'max_query_id',
+                'table': 'query'
+            },
+            {
+                'id_column': 'initiates_executions_id',
+                'alias': 'max_initiates_id',
+                'table': 'initiates_executions'
+            },
         ]
 
-        results = dict([(x['alias'], self.execute_query(query_template.format(**x))[x['alias']][0] or 0) for x in queries])
+        results = dict([
+            (x['alias'],
+             self.execute_query(query_template.format(**x))[x['alias']][0]
+             or 0) for x in queries
+        ])
         LOGGER.debug(results)
 
         return results
@@ -242,7 +286,8 @@ class DatabaseManager(object, metaclass=Singleton):
             # LOGGER.debug('Inserting data %s to table %s', data, table)
             cursor.insert(table, data)
         except monetdblite.Error as err:
-            LOGGER.error("Did not insert data to %s\nError: %s", table, str(err))
+            LOGGER.error("Did not insert data to %s\nError: %s", table,
+                         str(err))
             # LOGGER.warning(data)
 
         cursor.close()
@@ -347,14 +392,23 @@ class DatabaseManager(object, metaclass=Singleton):
             # so convert these to normal ints. It is desirable to not
             # have to do this so should this be reported as a
             # MonetDBLite feature request/BUG?
-            events = [[int(eid)] for eid_lst in cursor.fetchall() for eid in eid_lst]
-            cursor.executemany("INSERT INTO rejected_profiler_event (SELECT * FROM profiler_event, (SELECT 'Violates unique_pe_profiler_event constraint') as rejection_reason WHERE event_id=%s)", events)
+            events = [[int(eid)] for eid_lst in cursor.fetchall()
+                      for eid in eid_lst]
+            cursor.executemany(
+                "INSERT INTO rejected_profiler_event (SELECT * FROM profiler_event, (SELECT 'Violates unique_pe_profiler_event constraint') as rejection_reason WHERE event_id=%s)",
+                events)
 
-            cursor.executemany("DELETE FROM profiler_event WHERE event_id=%s", events)
-            cursor.executemany("DELETE FROM prerequisite_events WHERE prerequisite_event=%s", events)
-            cursor.executemany("DELETE FROM prerequisite_events WHERE consequent_event=%s", events)
+            cursor.executemany("DELETE FROM profiler_event WHERE event_id=%s",
+                               events)
+            cursor.executemany(
+                "DELETE FROM prerequisite_events WHERE prerequisite_event=%s",
+                events)
+            cursor.executemany(
+                "DELETE FROM prerequisite_events WHERE consequent_event=%s",
+                events)
 
-            cursor.executemany("DELETE FROM event_variable_list WHERE event_id=%s", events)
+            cursor.executemany(
+                "DELETE FROM event_variable_list WHERE event_id=%s", events)
 
         # Other possible violations that might arise in the future
         return violations
