@@ -57,6 +57,7 @@ class DatabaseManager(object, metaclass=Singleton):
         self._connection = None
         self._connect()
         self._initialize_tables()
+        self._lines = 0
 
     def _connect(self):
         self._connection = monetdblite.make_connection(self._dbpath, True)
@@ -269,6 +270,7 @@ class DatabaseManager(object, metaclass=Singleton):
         buf = []
         for ln in lines:
             buf.append(ln)
+            self._lines += 1
             if ln.endswith(u'}\n'):
                 json_string = ''.join(buf).strip()
                 return json_string
@@ -283,6 +285,7 @@ class DatabaseManager(object, metaclass=Singleton):
         pob = self.create_parser()
 
         LOGGER.debug("Ingesting trace: %d", len(contents))
+        self._lines = 0
         with StringIO(contents) as fl:
             json_stream = list()
             json_string = self._read_object(fl)
@@ -290,7 +293,8 @@ class DatabaseManager(object, metaclass=Singleton):
                 try:
                     json_stream.append(json.loads(json_string))
                 except Exception as e:
-                    LOGGER.error("JSON parser failed:\n %s", e)
+                    LOGGER.error("JSON parser failed:\n line: %d\n string: %s",
+                                 self._lines, json_string)
                     raise
                 json_string = self._read_object(fl)
         LOGGER.debug("Ingesting trace done")
