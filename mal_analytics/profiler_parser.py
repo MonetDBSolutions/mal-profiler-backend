@@ -297,10 +297,10 @@ class ProfilerObjectParser(object):
                 # and ``tag`` the object should have pc==0. I noticed
                 # it on remote table queries. This is probably a BUG
                 # in the MonetDB server.
-                LOGGER.warning("Instruction with pc==0 missing for execution {}:{}".format(
-                    json_object.get('session'),
-                    json_object.get('tag')
-                ))
+                # LOGGER.warning("Instruction with pc==0 missing for execution {}:{}".format(
+                #     json_object.get('session'),
+                #     json_object.get('tag')
+                # ))
                 # If the event with pc == 0 does not exist, then get
                 # the name by splitting the function field of the JSON
                 # object.
